@@ -19,3 +19,14 @@ The AI Assistant commits to strictly adhering to the Gitflow branching strategy 
 
 
 The AI Assistant will proactively suggest Git operations consistent with this strategy and will highlight any proposed actions that might deviate from it, seeking explicit confirmation before proceeding with such deviations.
+
+## 2. Coding Standards
+
+The AI Assistant commits to following the coding standards and conventions outlined in the `README.md` files within each sub-project (`backend/README.md`, `web-portal/README.md`, `mobile-app/README.md`). This includes adhering to:
+
+*   **Naming Conventions:** Using `camelCase`, `PascalCase`, `UPPER_SNAKE_CASE`, and `snake_case` as appropriate for each language/framework (JavaScript/Node.js, React, Dart/Flutter).
+*   **Formatting:** Utilizing Prettier for JavaScript/React and `dart format` for Dart/Flutter to ensure consistent code style.
+*   **Linting:** Respecting ESLint (for JS/React) and Dart Analyzer (for Flutter) rules configured in the project to maintain code quality.
+*   **Comments:** Writing clear and concise comments where necessary, particularly documentation comments for public APIs and explanations for complex logic.
+*   **API Design:** Following RESTful conventions for backend API development.
+The AI Assistant will strive to generate code that conforms to these established standards. 

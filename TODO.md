@@ -28,9 +28,9 @@ This document tracks the development progress for the SmartPresence MVP.
 
 ## I. Core System Setup & Backend (Node.js, Express, PostgreSQL)
 
-- [ ] **Task 1: Database Schema Design & Setup (PostgreSQL)**
-    - [ ] Define tables for: Users (Admins, Teachers, Students with roles), Rooms (with Wi-Fi SSID, Bluetooth Beacon ID), Classes, Sessions (with date, time window, room_id), Student_Enrollments (linking students to classes), Attendance_Records (linking students to sessions, timestamp, status).
-    - [ ] Set up the PostgreSQL database on Heroku (or locally for development).
+- [x] **Task 1: Database Schema Design & Setup (PostgreSQL)**
+    - [x] Define tables for: Users (Admins, Teachers, Students with roles), Rooms (with Wi-Fi SSID, Bluetooth Beacon ID), Classes, Sessions (with date, time window, room_id), Student_Enrollments (linking students to classes), Attendance_Records (linking students to sessions, timestamp, status).
+    - [x] Set up the PostgreSQL database on Heroku (or locally for development). (Local setup with migrations complete)
 - [ ] **Task 2: API Development - Authentication (Node.js, Express, JWT)**
     - [ ] Implement user registration and login endpoints.
     - [ ] Generate JWT tokens upon successful login.
