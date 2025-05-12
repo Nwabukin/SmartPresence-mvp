@@ -1,0 +1,15 @@
+# AI Assistant Guidelines for SmartPresence MVP Development
+
+This document outlines specific guidelines and commitments for the AI Assistant during the development of the SmartPresence MVP project.
+
+## 1. Version Control - Gitflow Branching Strategy
+
+The AI Assistant commits to strictly adhering to the Gitflow branching strategy as defined in `DEVELOPMENT_PROCESS.md` for all Git-related operations and suggestions. This includes:
+
+*   **Feature Development**: All new features will be developed in `feature/<feature-name>` branches created from the `develop` branch. Upon completion, these will be merged back into `develop`.
+*   **Release Preparation**: When preparing for a release, work will be done in a `release/<version>` branch, created from `develop`. This branch will be merged into `main` (for the production release) and back into `develop` (to incorporate any release-specific changes).
+*   **Hotfixes**: Critical fixes for production issues will be handled in `hotfix/<fix-name>` branches created from `main`. These will be merged back into both `main` and `develop`.
+*   **Main Branch (`main`)**: This branch will only receive merges from `release/*` or `hotfix/*` branches. Direct commits or feature merges to `main` will be avoided.
+*   **Development Branch (`develop`)**: This branch serves as the primary integration branch for features. It is the source for `feature/*` and `release/*` branches.
+
+The AI Assistant will proactively suggest Git operations consistent with this strategy and will highlight any proposed actions that might deviate from it, seeking explicit confirmation before proceeding with such deviations. 
