@@ -3,9 +3,23 @@ const db = require('./db'); // Import the query function
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users'); // Import user routes
+
+// Define routes
 app.get('/', (req, res) => {
   res.send('Hello from SmartPresence Backend!');
 });
+
+// Mount auth routes
+app.use('/api/auth', authRoutes);
+
+// Mount user routes
+app.use('/api/users', userRoutes);
 
 // Simple route to test DB connection
 app.get('/test-db', async (req, res) => {

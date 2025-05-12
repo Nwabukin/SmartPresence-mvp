@@ -31,16 +31,16 @@ This document tracks the development progress for the SmartPresence MVP.
 - [x] **Task 1: Database Schema Design & Setup (PostgreSQL)**
     - [x] Define tables for: Users (Admins, Teachers, Students with roles), Rooms (with Wi-Fi SSID, Bluetooth Beacon ID), Classes, Sessions (with date, time window, room_id), Student_Enrollments (linking students to classes), Attendance_Records (linking students to sessions, timestamp, status).
     - [x] Set up the PostgreSQL database on Heroku (or locally for development). (Local setup with migrations complete)
-- [ ] **Task 2: API Development - Authentication (Node.js, Express, JWT)**
-    - [ ] Implement user registration and login endpoints.
-    - [ ] Generate JWT tokens upon successful login.
-    - [ ] Create middleware to protect routes, verifying JWT tokens.
+- [x] **Task 2: API Development - Authentication (Node.js, Express, JWT)**
+    - [x] Implement user registration and login endpoints. (Note: Registration now admin-only under Task 3)
+    - [x] Generate JWT tokens upon successful login.
+    - [x] Create middleware to protect routes, verifying JWT tokens.
 - [ ] **Task 3: API Development - Admin Functionality**
     - [ ] Endpoints for:
         - [ ] Creating/Reading/Updating/Deleting (CRUD) Rooms (including Wi-Fi SSID, Bluetooth Beacon ID).
-        - [ ] CRUD operations for Teacher accounts.
-        - [ ] CRUD operations for Student accounts.
-        - [ ] Assigning roles to users.
+        - [x] CRUD operations for Teacher accounts.
+        - [x] CRUD operations for Student accounts.
+        - [ ] Assigning roles to users. (Note: Role assigned at creation; update not yet implemented)
 - [ ] **Task 4: API Development - Teacher Functionality**
     - [ ] Endpoints for:
         - [ ] CRUD operations for Classes.
