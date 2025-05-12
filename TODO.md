@@ -20,11 +20,11 @@ This document tracks the development progress for the SmartPresence MVP.
     - [x] Install core dependencies (React, etc.). (Implicitly done)
     - [x] Initialize React project (e.g., using Vite or Create React App is still needed for full setup). (Completed with Vite)
     - [x] Set up basic folder structure (components, pages, services).
-- [ ] **Task 0.5: Initial Mobile App Project Setup (Flutter)**
-    - [ ] Initialize Flutter project (`flutter create`).
-    - [ ] Set up basic folder structure (screens, widgets, services).
-- [ ] **Task 0.6: Define Basic Coding Standards and Conventions**
-    - [ ] Document naming conventions, code style preferences.
+- [x] **Task 0.5: Initial Mobile App Project Setup (Flutter)**
+    - [x] Initialize Flutter project (`flutter create`).
+    - [x] Set up basic folder structure (screens, widgets, services). (Initial structure created by Flutter)
+- [x] **Task 0.6: Define Basic Coding Standards and Conventions**
+    - [x] Document naming conventions, code style preferences.
 
 ## I. Core System Setup & Backend (Node.js, Express, PostgreSQL)
 
