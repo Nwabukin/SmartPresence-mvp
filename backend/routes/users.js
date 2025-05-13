@@ -63,57 +63,94 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // PUT /api/users/:id
 router.put('/:id', authMiddleware, async (req, res) => {
   const requestedUserId = parseInt(req.params.id, 10);
-  const { firstName, lastName } = req.body;
-  const requestingUserId = req.user.id;
-  const requestingUserRole = req.user.role;
+  const { firstName, lastName, role } = req.body; // Destructure role from body
+  const requestingUser = req.user; // Contains requesting user's id and role
 
-  // Validate requested ID
   if (isNaN(requestedUserId)) {
     return res.status(400).json({ error: 'Invalid user ID format.' });
   }
 
-  // Basic input validation
-  if (!firstName && !lastName) {
-    return res.status(400).json({ error: 'No updateable fields provided (firstName, lastName).' });
+  // Check if at least one field is provided for update
+  if (firstName === undefined && lastName === undefined && role === undefined) {
+    return res.status(400).json({ error: 'No updateable fields provided (firstName, lastName, role).' });
   }
 
-  // Authorization Check:
-  // Allow if admin/teacher OR if the user is updating their own data
-  const canUpdate = [ROLES.ADMIN, ROLES.TEACHER].includes(requestingUserRole) || requestedUserId === requestingUserId;
-
-  if (!canUpdate) {
-    return res.status(403).json({ error: 'Forbidden: You do not have permission to update this user.' });
-  }
-
-  // Fields that can be updated
   const updatableFields = [];
   const queryParams = [];
   let paramIndex = 1;
+  let userBeingUpdatedCurrentRole = null;
 
-  if (firstName) {
-    updatableFields.push(`first_name = $${paramIndex++}`);
-    queryParams.push(firstName);
+  // If a role change is attempted by an admin for another user, fetch that user's current role.
+  if (role !== undefined && requestingUser.role === ROLES.ADMIN && requestedUserId !== requestingUser.id) {
+    try {
+      const userResult = await db.query('SELECT role FROM users WHERE user_id = $1', [requestedUserId]);
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'User to be updated not found.' });
+      }
+      userBeingUpdatedCurrentRole = userResult.rows[0].role;
+    } catch (err) {
+      console.error(`Error fetching user ${requestedUserId} for role check:`, err);
+      return res.status(500).json({ error: 'Server error during user data retrieval for update.' });
+    }
   }
-  if (lastName) {
-    updatableFields.push(`last_name = $${paramIndex++}`);
-    queryParams.push(lastName);
+
+  // Handle firstName update
+  if (firstName !== undefined) {
+    const canUpdateFirstName = 
+      requestingUser.role === ROLES.ADMIN || 
+      requestingUser.role === ROLES.TEACHER || 
+      (requestedUserId === requestingUser.id);
+    
+    if (canUpdateFirstName) {
+      updatableFields.push(`first_name = $${paramIndex++}`);
+      queryParams.push(firstName);
+    } else if (role === undefined || requestingUser.role !== ROLES.ADMIN) { 
+      // If firstName is provided, user is not authorized, and it's not an admin simultaneously attempting a role change
+      return res.status(403).json({ error: 'Forbidden: You do not have permission to update firstName for this user.' });
+    }
+  }
+
+  // Handle lastName update
+  if (lastName !== undefined) {
+    const canUpdateLastName = 
+      requestingUser.role === ROLES.ADMIN || 
+      requestingUser.role === ROLES.TEACHER || 
+      (requestedUserId === requestingUser.id);
+
+    if (canUpdateLastName) {
+      updatableFields.push(`last_name = $${paramIndex++}`);
+      queryParams.push(lastName);
+    } else if (role === undefined || requestingUser.role !== ROLES.ADMIN) {
+      // If lastName is provided, user is not authorized, and it's not an admin simultaneously attempting a role change
+      return res.status(403).json({ error: 'Forbidden: You do not have permission to update lastName for this user.' });
+    }
   }
   
-  // More complex role/email updates would require specific checks for admin privileges
-  // For example, only an ADMIN can change a user's role
-  // if (req.body.role && requestingUserRole === ROLES.ADMIN) {
-  //   if (!Object.values(ROLES).includes(req.body.role)) {
-  //     return res.status(400).json({ error: 'Invalid role specified.' });
-  //   }
-  //   updatableFields.push(`role = $${paramIndex++}`);
-  //   queryParams.push(req.body.role);
-  // }
-
-  if (updatableFields.length === 0) {
-    return res.status(400).json({ error: 'No valid fields provided for update or insufficient permissions for certain fields.' });
+  // Handle role update
+  if (role !== undefined) {
+    if (requestingUser.role !== ROLES.ADMIN) {
+      return res.status(403).json({ error: 'Forbidden: Only administrators can change user roles.' });
+    }
+    if (requestedUserId === requestingUser.id) {
+      return res.status(403).json({ error: 'Forbidden: Administrators cannot change their own role via this endpoint.' });
+    }
+    if (userBeingUpdatedCurrentRole === ROLES.ADMIN) {
+      return res.status(403).json({ error: 'Forbidden: Cannot change the role of another administrator via this endpoint.' });
+    }
+    if (![ROLES.TEACHER, ROLES.STUDENT].includes(role)) {
+      return res.status(400).json({ error: 'Invalid target role specified. Can only change to teacher or student.' });
+    }
+    
+    updatableFields.push(`role = $${paramIndex++}`);
+    queryParams.push(role);
   }
 
-  queryParams.push(requestedUserId); // For the WHERE clause
+  if (updatableFields.length === 0) {
+    // This means fields were provided, but none resulted in an update (e.g., due to permission issues for all provided fields)
+    return res.status(400).json({ error: 'No valid changes to apply. Check permissions or provided data.' });
+  }
+
+  queryParams.push(requestedUserId); // For the WHERE user_id = $N clause
 
   try {
     const queryText = `UPDATE users SET ${updatableFields.join(', ')} WHERE user_id = $${paramIndex} RETURNING user_id, email, first_name, last_name, role`;
@@ -121,7 +158,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const result = await db.query(queryText, queryParams);
 
     if (result.rows.length === 0) {
-      // This could happen if the user ID doesn't exist OR if the user tried to update a user they don't own (if we had stricter WHERE clauses)
+      // Should ideally be caught by the user check if role was being updated, but good as a fallback.
       return res.status(404).json({ error: 'User not found or update failed.' });
     }
 
