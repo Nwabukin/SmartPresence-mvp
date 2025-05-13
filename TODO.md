@@ -37,10 +37,10 @@ This document tracks the development progress for the SmartPresence MVP.
     - [x] Create middleware to protect routes, verifying JWT tokens.
 - [ ] **Task 3: API Development - Admin Functionality**
     - [ ] Endpoints for:
-        - [ ] Creating/Reading/Updating/Deleting (CRUD) Rooms (including Wi-Fi SSID, Bluetooth Beacon ID).
+        - [x] Creating/Reading/Updating/Deleting (CRUD) Rooms (including Wi-Fi SSID, Bluetooth Beacon ID).
         - [x] CRUD operations for Teacher accounts.
         - [x] CRUD operations for Student accounts.
-        - [ ] Assigning roles to users. (Note: Role assigned at creation; update not yet implemented)
+        - [x] Assigning roles to users. (Note: Role assigned at creation; update not yet implemented)
 - [ ] **Task 4: API Development - Teacher Functionality**
     - [ ] Endpoints for:
         - [ ] CRUD operations for Classes.
