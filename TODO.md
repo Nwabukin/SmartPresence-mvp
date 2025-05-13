@@ -41,13 +41,13 @@ This document tracks the development progress for the SmartPresence MVP.
         - [x] CRUD operations for Teacher accounts.
         - [x] CRUD operations for Student accounts.
         - [ ] Assigning roles to users. (Note: Role assigned at creation; update not yet implemented)
-- [ ] **Task 4: API Development - Teacher Functionality**
-    - [ ] Endpoints for:
-        - [ ] CRUD operations for Classes.
-        - [ ] Enrolling/Unenrolling students in Classes.
-        - [ ] CRUD operations for Sessions (linking to a Class and a Room, setting date/time window).
-        - [ ] Viewing attendance records for a Session.
-        - [ ] Manually updating attendance records (e.g., mark present/absent).
+- [x] **Task 4: API Development - Teacher Functionality**
+    - [x] Endpoints for:
+        - [x] CRUD operations for Classes.
+        - [x] Enrolling/Unenrolling students in Classes.
+        - [x] CRUD operations for Sessions (linking to a Class and a Room, setting date/time window).
+        - [x] Viewing attendance records for a Session.
+        - [x] Manually updating attendance records (e.g., mark present/absent).
 - [ ] **Task 5: API Development - Student Functionality (for Mobile App)**
     - [ ] Endpoints for:
         - [ ] Fetching enrolled classes for a student.
