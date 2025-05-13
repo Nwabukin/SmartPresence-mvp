@@ -9,6 +9,7 @@ app.use(express.json());
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users'); // Import user routes
+const roomRoutes = require('./routes/rooms'); // Import room routes
 
 // Define routes
 app.get('/', (req, res) => {
@@ -20,6 +21,9 @@ app.use('/api/auth', authRoutes);
 
 // Mount user routes
 app.use('/api/users', userRoutes);
+
+// Mount room routes
+app.use('/api/rooms', roomRoutes);
 
 // Simple route to test DB connection
 app.get('/test-db', async (req, res) => {
