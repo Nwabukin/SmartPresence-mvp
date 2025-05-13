@@ -10,6 +10,9 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users'); // Import user routes
 const roomRoutes = require('./routes/rooms'); // Import room routes
+const classRoutes = require('./routes/classes'); // Import class routes
+const sessionRoutes = require('./routes/sessions'); // Import session routes
+const attendanceRoutes = require('./routes/attendance'); // Import attendance routes
 
 // Define routes
 app.get('/', (req, res) => {
@@ -24,6 +27,15 @@ app.use('/api/users', userRoutes);
 
 // Mount room routes
 app.use('/api/rooms', roomRoutes);
+
+// Mount class routes
+app.use('/api/classes', classRoutes);
+
+// Mount session routes
+app.use('/api/sessions', sessionRoutes);
+
+// Mount attendance routes
+app.use('/api/attendance', attendanceRoutes);
 
 // Simple route to test DB connection
 app.get('/test-db', async (req, res) => {
