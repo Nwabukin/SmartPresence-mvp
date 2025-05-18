@@ -48,7 +48,7 @@ This document tracks the development progress for the SmartPresence MVP.
         - [x] CRUD operations for Sessions (linking to a Class and a Room, setting date/time window).
         - [x] Viewing attendance records for a Session.
         - [x] Manually updating attendance records (e.g., mark present/absent).
-- [~] **Task 5: API Development - Student Functionality (for Mobile App)**
+- [x] **Task 5: API Development - Student Functionality (for Mobile App)**
     - [ ] Endpoints for:
         - [x] Fetching enrolled classes for a student.
         - [~] Marking attendance for a session:
@@ -59,8 +59,8 @@ This document tracks the development progress for the SmartPresence MVP.
                 - [x] Fetch room details for the session.
                 - [x] Compare submitted Wi-Fi SSID and Bluetooth Beacon ID with the room's configured IDs.
                 - [x] Prevent duplicate attendance for the same student in the same session.
-                - [ ] Record attendance if all checks pass.
-- [~] **Task 6: API Development - Location Verification Logic**
+                - [x] Record attendance if all checks pass.
+- [x] **Task 6: API Development - Location Verification Logic**
     - [x] Implement the core logic within the attendance marking endpoint to compare submitted Wi-Fi/Bluetooth data with stored room data.
 
 ## II. Web Portal Development (React)

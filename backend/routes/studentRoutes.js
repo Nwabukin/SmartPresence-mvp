@@ -135,11 +135,29 @@ router.post('/attendance/mark', authMiddleware, async (req, res) => {
       return res.status(409).json({ error: 'Conflict: Attendance already recorded for this session.' }); // 409 Conflict
     }
 
-    // TODO: Implement further logic:
     // 6. Record attendance if all checks pass.
+    const attendanceStatus = 'present'; // Assuming 'present' as the default status upon successful marking
+    const recordedAt = new Date(); // Current timestamp
 
-    // Placeholder response
-    res.status(200).json({ message: 'All checks passed up to duplicate check. Ready to record. Logic pending.' });
+    const insertAttendanceQuery = `
+      INSERT INTO attendance_records (student_id, session_id, status, recorded_at, verified_wifi_ssid, verified_bluetooth_beacon_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING attendance_record_id, student_id, session_id, status, recorded_at, verified_wifi_ssid, verified_bluetooth_beacon_id;
+    `;
+    
+    const insertResult = await db.query(insertAttendanceQuery, [
+      studentId,
+      session_id,
+      attendanceStatus,
+      recordedAt,
+      wifi_ssid, // The student-submitted and verified Wi-Fi SSID
+      bluetooth_beacon_id // The student-submitted and verified Bluetooth Beacon ID (could be null)
+    ]);
+
+    res.status(201).json({
+      message: 'Attendance marked successfully.',
+      attendanceRecord: insertResult.rows[0]
+    });
 
   } catch (err) {
     console.error('Error marking attendance:', err);
