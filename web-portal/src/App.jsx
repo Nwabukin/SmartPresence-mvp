@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import AdminRoomManagementPage from './pages/admin/AdminRoomManagementPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
 import './App.css'; // Keep existing styles for now
 
@@ -18,11 +20,16 @@ function App() {
           {isAuthenticated ? (
             <>
               <li>
-                <span>Welcome, {user?.email || 'User'}!</span> {/** Display user email or generic User */}
+                <span>Welcome, {user?.email || 'User'}! (Role: {user?.role})</span> {/** Display role */}
               </li>
               <li>
                 <button onClick={logout}>Logout</button>
               </li>
+              {user?.role === 'admin' && (
+                <li>
+                  <Link to="/admin/rooms">Manage Rooms</Link>
+                </li>
+              )}
             </>
           ) : (
             <li>
@@ -38,6 +45,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin/rooms" element={<ProtectedRoute role="admin"><AdminRoomManagementPage /></ProtectedRoute>} />
         {/* Define more routes here as the application grows */}
         {/* Example of a protected route to be added later:
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /> 
