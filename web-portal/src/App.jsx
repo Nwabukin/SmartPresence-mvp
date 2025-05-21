@@ -6,6 +6,7 @@ import AdminRoomManagementPage from './pages/admin/AdminRoomManagementPage';
 import AdminUserManagementPage from './pages/admin/AdminUserManagementPage';
 import TeacherClassManagementPage from './pages/teacher/TeacherClassManagementPage';
 import TeacherEnrollmentPage from './pages/teacher/TeacherEnrollmentPage';
+import TeacherSessionManagementPage from './pages/teacher/TeacherSessionManagementPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
 import './App.css'; // Keep existing styles for now
@@ -46,6 +47,9 @@ function App() {
                   <li>
                     <Link to="/teacher/enrollments">Manage Student Enrollments</Link>
                   </li>
+                  <li>
+                    <Link to="/teacher/sessions">Manage Class Sessions</Link>
+                  </li>
                 </>
               )}
             </>
@@ -67,6 +71,7 @@ function App() {
         <Route path="/admin/users" element={<ProtectedRoute role="admin"><AdminUserManagementPage /></ProtectedRoute>} />
         <Route path="/teacher/classes" element={<ProtectedRoute role="teacher"><TeacherClassManagementPage /></ProtectedRoute>} />
         <Route path="/teacher/enrollments" element={<ProtectedRoute role="teacher"><TeacherEnrollmentPage /></ProtectedRoute>} />
+        <Route path="/teacher/sessions" element={<ProtectedRoute role="teacher"><TeacherSessionManagementPage /></ProtectedRoute>} />
         {/* Define more routes here as the application grows */}
         {/* Example of a protected route to be added later:
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /> 
