@@ -1,35 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import { useAuth } from './contexts/AuthContext'; // Import useAuth
+import './App.css'; // Keep existing styles for now
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { isAuthenticated, user, logout } = useAuth(); // Get auth state and functions
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div>
+      <nav>
+        <ul>
+          <li>
+            <Link to="/">Home</Link>
+          </li>
+          {isAuthenticated ? (
+            <>
+              <li>
+                <span>Welcome, {user?.email || 'User'}!</span> {/** Display user email or generic User */}
+              </li>
+              <li>
+                <button onClick={logout}>Logout</button>
+              </li>
+            </>
+          ) : (
+            <li>
+              <Link to="/login">Login</Link>
+            </li>
+          )}
+          {/* Add more navigation links as needed */}
+        </ul>
+      </nav>
+
+      <hr />
+
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        {/* Define more routes here as the application grows */}
+        {/* Example of a protected route to be added later:
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /> 
+        */}
+      </Routes>
+    </div>
+  );
 }
 
-export default App
+export default App;

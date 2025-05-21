@@ -48,27 +48,27 @@ This document tracks the development progress for the SmartPresence MVP.
         - [x] CRUD operations for Sessions (linking to a Class and a Room, setting date/time window).
         - [x] Viewing attendance records for a Session.
         - [x] Manually updating attendance records (e.g., mark present/absent).
-- [ ] **Task 5: API Development - Student Functionality (for Mobile App)**
+- [x] **Task 5: API Development - Student Functionality (for Mobile App)**
     - [ ] Endpoints for:
-        - [ ] Fetching enrolled classes for a student.
-        - [ ] Marking attendance for a session:
+        - [x] Fetching enrolled classes for a student.
+        - [x] Marking attendance for a session:
             - [ ] Input: class_id, session_id, current Wi-Fi SSID, current Bluetooth Beacon ID.
             - [ ] Logic:
-                - [ ] Verify student is enrolled in the class.
-                - [ ] Verify session exists and is currently active (within time window).
-                - [ ] Fetch room details for the session.
-                - [ ] Compare submitted Wi-Fi SSID and Bluetooth Beacon ID with the room's configured IDs.
-                - [ ] Prevent duplicate attendance for the same student in the same session.
-                - [ ] Record attendance if all checks pass.
-- [ ] **Task 6: API Development - Location Verification Logic**
-    - [ ] Implement the core logic within the attendance marking endpoint to compare submitted Wi-Fi/Bluetooth data with stored room data.
+                - [x] Verify student is enrolled in the class.
+                - [x] Verify session exists and is currently active (within time window).
+                - [x] Fetch room details for the session.
+                - [x] Compare submitted Wi-Fi SSID and Bluetooth Beacon ID with the room's configured IDs.
+                - [x] Prevent duplicate attendance for the same student in the same session.
+                - [x] Record attendance if all checks pass.
+- [x] **Task 6: API Development - Location Verification Logic**
+    - [x] Implement the core logic within the attendance marking endpoint to compare submitted Wi-Fi/Bluetooth data with stored room data.
 
 ## II. Web Portal Development (React)
 
-- [ ] **Task 7: Setup React Project & Basic Structure**
-    - [ ] Initialize React application.
-    - [ ] Set up routing.
-    - [ ] Implement JWT handling for API requests.
+- [x] **Task 7: Setup React Project & Basic Structure**
+    - [x] Initialize React application.
+    - [x] Set up routing.
+    - [x] Implement JWT handling for API requests.
 - [ ] **Task 8: Admin UI - Room Management**
     - [ ] Interface to list, create, edit, and delete rooms (with Wi-Fi SSID and Bluetooth Beacon ID fields).
 - [ ] **Task 9: Admin UI - User Management**
