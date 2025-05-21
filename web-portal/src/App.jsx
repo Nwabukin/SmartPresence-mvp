@@ -3,6 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AdminRoomManagementPage from './pages/admin/AdminRoomManagementPage';
+import AdminUserManagementPage from './pages/admin/AdminUserManagementPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext'; // Import useAuth
 import './App.css'; // Keep existing styles for now
@@ -26,9 +27,14 @@ function App() {
                 <button onClick={logout}>Logout</button>
               </li>
               {user?.role === 'admin' && (
-                <li>
-                  <Link to="/admin/rooms">Manage Rooms</Link>
-                </li>
+                <>
+                  <li>
+                    <Link to="/admin/rooms">Manage Rooms</Link>
+                  </li>
+                  <li>
+                    <Link to="/admin/users">Manage Users</Link>
+                  </li>
+                </>
               )}
             </>
           ) : (
@@ -46,6 +52,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/rooms" element={<ProtectedRoute role="admin"><AdminRoomManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute role="admin"><AdminUserManagementPage /></ProtectedRoute>} />
         {/* Define more routes here as the application grows */}
         {/* Example of a protected route to be added later:
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /> 

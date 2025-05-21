@@ -71,7 +71,7 @@ This document tracks the development progress for the SmartPresence MVP.
     - [x] Implement JWT handling for API requests.
 - [x] **Task 8: Admin UI - Room Management**
     - [x] Interface to list, create, edit, and delete rooms (with Wi-Fi SSID and Bluetooth Beacon ID fields).
-- [ ] **Task 9: Admin UI - User Management**
+- [x] **Task 9: Admin UI - User Management**
     - [ ] Interface to list, create, edit (roles), and delete teacher and student accounts.
 - [ ] **Task 10: Teacher UI - Class Management**
     - [ ] Interface to list, create, edit, and delete classes.
