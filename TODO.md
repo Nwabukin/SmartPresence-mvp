@@ -50,8 +50,8 @@ This document tracks the development progress for the SmartPresence MVP.
         - [x] Manually updating attendance records (e.g., mark present/absent).
 - [x] **Task 5: API Development - Student Functionality (for Mobile App)**
     - [ ] Endpoints for:
-        - [x] Fetching enrolled classes for a student.
-        - [x] Marking attendance for a session:
+        - [ ] Fetching enrolled classes for a student.
+        - [ ] Marking attendance for a session:
             - [ ] Input: class_id, session_id, current Wi-Fi SSID, current Bluetooth Beacon ID.
             - [ ] Logic:
                 - [x] Verify student is enrolled in the class.
