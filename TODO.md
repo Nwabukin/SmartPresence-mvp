@@ -75,8 +75,8 @@ This document tracks the development progress for the SmartPresence MVP.
     - [ ] Interface to list, create, edit (roles), and delete teacher and student accounts.
 - [x] **Task 10: Teacher UI - Class Management**
     - [x] Interface to list, create, edit, and delete classes.
-- [ ] **Task 11: Teacher UI - Student Enrollment Management**
-    - [ ] Interface to add/remove students from classes.
+- [x] **Task 11: Teacher UI - Student Enrollment Management**
+    - [x] Interface to add/remove students from classes.
 - [ ] **Task 12: Teacher UI - Session Management**
     - [ ] Interface to schedule sessions for classes (select class, room, date, time window).
     - [ ] List existing sessions.
