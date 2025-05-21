@@ -80,9 +80,9 @@ This document tracks the development progress for the SmartPresence MVP.
 - [x] **Task 12: Teacher UI - Session Management**
     - [x] Interface to schedule sessions for classes (select class, room, date, time window).
     - [x] List existing sessions.
-- [ ] **Task 13: Teacher UI - Attendance Viewing & Modification**
-    - [ ] Interface to view attendance records for a session.
-    - [ ] Allow manual modification of attendance status.
+- [x] **Task 13: Teacher UI - Attendance Viewing & Modification**
+    - [x] Interface to view attendance records for a session.
+    - [x] Allow manual modification of attendance status.
 
 ## III. Mobile App Development (Flutter)
 
