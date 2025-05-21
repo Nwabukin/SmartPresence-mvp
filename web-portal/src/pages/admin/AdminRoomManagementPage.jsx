@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../../services/apiService'; // Assuming apiService is in services
 import { useAuth } from '../../contexts/AuthContext'; // To check admin role
+import Modal from '../../components/Modal'; // Import Modal
+import RoomForm from '../../components/RoomForm'; // Import RoomForm
 
 // Simple Modal Component (can be moved to a separate file later)
 const Modal = ({ show, onClose, title, children }) => {
@@ -19,7 +21,7 @@ const Modal = ({ show, onClose, title, children }) => {
 };
 
 // Room Form Component (can be moved to a separate file later)
-const RoomForm = ({ onSubmit, initialData = {}, onCancel }) => {
+const RoomForm = ({ onSubmit, initialData = {}, onCancel, isEditMode }) => {
   const [name, setName] = useState(initialData.name || '');
   const [wifiSsid, setWifiSsid] = useState(initialData.wifi_ssid || '');
   const [beaconId, setBeaconId] = useState(initialData.bluetooth_beacon_id || '');
@@ -171,6 +173,7 @@ function AdminRoomManagementPage() {
             onSubmit={handleUpdateRoom} 
             initialData={editingRoom} 
             onCancel={() => { setShowEditModal(false); setEditingRoom(null); }} 
+            isEditMode={true}
           />
         </Modal>
       )}
