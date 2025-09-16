@@ -21,7 +21,7 @@ function AdminUserManagementPage() {
     }
     try {
       setLoading(true);
-      const data = await apiRequest('/users', 'GET'); 
+      const data = await apiRequest('/users', 'GET');
       setUsers(data || []);
       setError(null);
     } catch (err) {
@@ -60,10 +60,16 @@ function AdminUserManagementPage() {
   const handleUpdateUser = async (userData) => {
     if (!editingUser) return;
     try {
-      const updatedUserResponse = await apiRequest(`/users/${editingUser.user_id}`, 'PUT', userData);
+      const updatedUserResponse = await apiRequest(
+        `/users/${editingUser.user_id}`,
+        'PUT',
+        userData
+      );
       // Assuming backend returns { message, user: result.rows[0] }
       const updatedUser = updatedUserResponse.user;
-      setUsers(users.map(u => u.user_id === updatedUser.user_id ? updatedUser : u));
+      setUsers(
+        users.map((u) => (u.user_id === updatedUser.user_id ? updatedUser : u))
+      );
       setShowEditUserModal(false);
       setEditingUser(null);
       setError(null);
@@ -75,10 +81,14 @@ function AdminUserManagementPage() {
 
   const handleDeleteUserClick = async (userId) => {
     // eslint-disable-next-line no-restricted-globals
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    if (
+      confirm(
+        'Are you sure you want to delete this user? This action cannot be undone.'
+      )
+    ) {
       try {
         await apiRequest(`/users/${userId}`, 'DELETE');
-        setUsers(users.filter(u => u.user_id !== userId));
+        setUsers(users.filter((u) => u.user_id !== userId));
         setError(null);
       } catch (err) {
         console.error('Error deleting user:', err);
@@ -98,28 +108,50 @@ function AdminUserManagementPage() {
   if (error && !users.length) {
     return <div>Error: {error}</div>;
   }
-  
+
   return (
     <div>
       <h1>User Management (Admin)</h1>
-      <button onClick={() => setShowCreateUserModal(true)} style={{marginBottom: 15}}>Create New User</button>
+      <button
+        onClick={() => setShowCreateUserModal(true)}
+        style={{ marginBottom: 15 }}
+      >
+        Create New User
+      </button>
 
-      <Modal title="Create New User" show={showCreateUserModal} onClose={() => setShowCreateUserModal(false)}>
-        <UserForm onSubmit={handleCreateUser} onCancel={() => setShowCreateUserModal(false)} />
+      <Modal
+        title="Create New User"
+        show={showCreateUserModal}
+        onClose={() => setShowCreateUserModal(false)}
+      >
+        <UserForm
+          onSubmit={handleCreateUser}
+          onCancel={() => setShowCreateUserModal(false)}
+        />
       </Modal>
 
       {editingUser && (
-        <Modal title={`Edit User: ${editingUser.email}`} show={showEditUserModal} onClose={() => {setShowEditUserModal(false); setEditingUser(null);}}>
-          <UserForm 
-            onSubmit={handleUpdateUser} 
-            initialData={editingUser} 
-            onCancel={() => {setShowEditUserModal(false); setEditingUser(null);}}
-            isEditMode={true} 
+        <Modal
+          title={`Edit User: ${editingUser.email}`}
+          show={showEditUserModal}
+          onClose={() => {
+            setShowEditUserModal(false);
+            setEditingUser(null);
+          }}
+        >
+          <UserForm
+            onSubmit={handleUpdateUser}
+            initialData={editingUser}
+            onCancel={() => {
+              setShowEditUserModal(false);
+              setEditingUser(null);
+            }}
+            isEditMode={true}
           />
         </Modal>
       )}
 
-      {error && <p style={{color: 'red'}}>{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {users.length > 0 ? (
         <table>
           <thead>
@@ -143,18 +175,23 @@ function AdminUserManagementPage() {
                 <td>{user.role}</td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
                 <td>
-                  <button onClick={() => handleEditUserClick(user)}>Edit</button>
-                  <button onClick={() => handleDeleteUserClick(user.user_id)}>Delete</button>
+                  <button onClick={() => handleEditUserClick(user)}>
+                    Edit
+                  </button>
+                  <button onClick={() => handleDeleteUserClick(user.user_id)}>
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        !error && !loading && <p>No users found. Click "Create New User" to add one.</p>
+        !error &&
+        !loading && <p>No users found. Click "Create New User" to add one.</p>
       )}
     </div>
   );
 }
 
-export default AdminUserManagementPage; 
+export default AdminUserManagementPage;

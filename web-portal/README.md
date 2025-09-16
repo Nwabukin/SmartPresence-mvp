@@ -13,11 +13,11 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## Coding Standards
 
-*   **Naming Conventions:**
-    *   Variables & Functions: `camelCase` (e.g., `userId`, `getUserData`)
-    *   React Components & Classes: `PascalCase` (e.g., `UserProfile`, `UserService`)
-    *   Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_USERS`)
-    *   Files: `PascalCase.jsx` for components, `camelCase.js` or `kebab-case.js` for utilities/hooks/etc.
-*   **Formatting:** Code formatting is enforced by Prettier using the configuration in `.prettierrc.json`. Run `npm run format` to format code.
-*   **Linting:** Code quality and potential errors are checked by ESLint using the configuration in `eslint.config.js`. Run `npm run lint` to check code.
-*   **Comments:** Use comments primarily to explain *why* something is done, not *what* it does (code should be self-explanatory). Document component props and complex logic.
+- **Naming Conventions:**
+  - Variables & Functions: `camelCase` (e.g., `userId`, `getUserData`)
+  - React Components & Classes: `PascalCase` (e.g., `UserProfile`, `UserService`)
+  - Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_USERS`)
+  - Files: `PascalCase.jsx` for components, `camelCase.js` or `kebab-case.js` for utilities/hooks/etc.
+- **Formatting:** Code formatting is enforced by Prettier using the configuration in `.prettierrc.json`. Run `npm run format` to format code.
+- **Linting:** Code quality and potential errors are checked by ESLint using the configuration in `eslint.config.js`. Run `npm run lint` to check code.
+- **Comments:** Use comments primarily to explain _why_ something is done, not _what_ it does (code should be self-explanatory). Document component props and complex logic.

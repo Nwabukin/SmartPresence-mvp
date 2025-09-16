@@ -4,10 +4,10 @@ const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const ROLES = require('../utils/roles');
 
-// Helper function to check if user can manage a session (is Admin or owns the class)
+// Helper function to check if user can manage a session (teacher owns the class)
 async function canManageSession(userId, userRole, classId) {
-  if (userRole === ROLES.ADMIN) {
-    return true; // Admin can manage any session
+  if (userRole !== ROLES.TEACHER) {
+    return false; // Only teachers can manage sessions
   }
   // Check if the teacher owns the class
   const classResult = await db.query('SELECT teacher_id FROM classes WHERE class_id = $1', [classId]);
@@ -17,7 +17,7 @@ async function canManageSession(userId, userRole, classId) {
   return classResult.rows[0].teacher_id === userId;
 }
 
-// --- Create a new Session (Teacher/Admin) ---
+// --- Create a new Session (Teacher Only) ---
 // POST /api/sessions
 router.post('/', authMiddleware, async (req, res) => {
   const { class_id, room_id, start_time, end_time } = req.body;
@@ -48,7 +48,7 @@ router.post('/', authMiddleware, async (req, res) => {
   try {
     const canCreate = await canManageSession(requestingUserId, requestingUserRole, classIdInt);
     if (!canCreate) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to create sessions for this class.' });
+      return res.status(403).json({ error: 'Forbidden: Only teachers can create sessions for their own classes.' });
     }
     
     // Verify room exists
@@ -68,7 +68,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Get all Sessions (Admin / Teacher for their classes) ---
+// --- Get all Sessions (Admin can view all, Teacher for their classes) ---
 // GET /api/sessions
 router.get('/', authMiddleware, async (req, res) => {
   const requestingUserId = req.user.id;
@@ -116,7 +116,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Get a specific Session by ID (Admin / Teacher who owns class) ---
+// --- Get a specific Session by ID (Admin can view all, Teacher who owns class) ---
 // GET /api/sessions/:sessionId
 router.get('/:sessionId', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
@@ -141,9 +141,14 @@ router.get('/:sessionId', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Session not found.' });
     }
     const session = result.rows[0];
-    const canView = await canManageSession(requestingUserId, requestingUserRole, session.class_id);
-    if (!canView) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to view this session.' });
+    // Admin can view all sessions, teachers can only view their own
+    if (requestingUserRole === ROLES.ADMIN) {
+      // Admin can view any session
+    } else {
+      const canView = await canManageSession(requestingUserId, requestingUserRole, session.class_id);
+      if (!canView) {
+        return res.status(403).json({ error: 'Forbidden: You do not have permission to view this session.' });
+      }
     }
     res.json(session);
   } catch (err) {
@@ -152,7 +157,7 @@ router.get('/:sessionId', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Update a Session by ID (Admin / Teacher who owns class) ---
+// --- Update a Session by ID (Teacher who owns class only) ---
 // PUT /api/sessions/:sessionId
 router.put('/:sessionId', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
@@ -240,7 +245,7 @@ router.put('/:sessionId', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Delete a Session by ID (Admin / Teacher who owns class) ---
+// --- Delete a Session by ID (Teacher who owns class only) ---
 // DELETE /api/sessions/:sessionId
 router.delete('/:sessionId', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
@@ -273,7 +278,7 @@ router.delete('/:sessionId', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Get Attendance Records for a Session (Admin / Teacher who owns class) ---
+// --- Get Attendance Records for a Session (Admin can view all, Teacher who owns class) ---
 // GET /api/sessions/:sessionId/attendance
 router.get('/:sessionId/attendance', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
@@ -293,10 +298,14 @@ router.get('/:sessionId/attendance', authMiddleware, async (req, res) => {
     }
     const classIdForSession = sessionResult.rows[0].class_id;
 
-    // 2. Authorize
-    const canViewAttendance = await canManageSession(requestingUserId, requestingUserRole, classIdForSession);
-    if (!canViewAttendance) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to view attendance for this session.' });
+    // 2. Authorize - Admin can view all attendance, teachers can only view their own
+    if (requestingUserRole === ROLES.ADMIN) {
+      // Admin can view any attendance
+    } else {
+      const canViewAttendance = await canManageSession(requestingUserId, requestingUserRole, classIdForSession);
+      if (!canViewAttendance) {
+        return res.status(403).json({ error: 'Forbidden: You do not have permission to view attendance for this session.' });
+      }
     }
 
     // 3. Fetch attendance records with student details

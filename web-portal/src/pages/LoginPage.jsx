@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -8,7 +8,7 @@ function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate(); // Already used by AuthProvider, but can be used here too if needed for other reasons
+  // const navigate = useNavigate(); // Already used by AuthProvider, but can be used here too if needed for other reasons
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +18,9 @@ function LoginPage() {
       await login(email, password);
       // Navigation is handled by the login function in AuthContext upon success
     } catch (err) {
-      setError(err.message || 'Failed to log in. Please check your credentials.');
+      setError(
+        err.message || 'Failed to log in. Please check your credentials.'
+      );
     }
     setLoading(false);
   };
@@ -56,4 +58,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage; 
+export default LoginPage;

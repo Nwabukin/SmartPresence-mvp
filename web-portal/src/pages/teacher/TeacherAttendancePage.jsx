@@ -18,11 +18,12 @@ function TeacherAttendancePage() {
       if (user?.role === 'teacher') {
         setLoading(true);
         try {
-          const [fetchedSessions, fetchedClasses, fetchedRooms] = await Promise.all([
-            apiRequest('/sessions'), // Fetches sessions for the logged-in teacher
-            apiRequest('/classes'),   // Fetches classes for the logged-in teacher
-            apiRequest('/rooms')      // Fetches all rooms
-          ]);
+          const [fetchedSessions, fetchedClasses, fetchedRooms] =
+            await Promise.all([
+              apiRequest('/sessions'), // Fetches sessions for the logged-in teacher
+              apiRequest('/classes'), // Fetches classes for the logged-in teacher
+              apiRequest('/rooms'), // Fetches all rooms
+            ]);
           setSessions(fetchedSessions || []);
           setClasses(fetchedClasses || []);
           setRooms(fetchedRooms || []);
@@ -50,7 +51,9 @@ function TeacherAttendancePage() {
         setLoading(true);
         try {
           // API endpoint: /sessions/:sessionId/attendance
-          const data = await apiRequest(`/sessions/${selectedSession}/attendance`);
+          const data = await apiRequest(
+            `/sessions/${selectedSession}/attendance`
+          );
           setAttendanceRecords(data || []);
           setError(null);
         } catch (err) {
@@ -70,9 +73,13 @@ function TeacherAttendancePage() {
     setLoading(true);
     try {
       // API endpoint: PUT /attendance-records/:recordId
-      await apiRequest(`/attendance-records/${recordId}`, 'PUT', { status: newStatus });
+      await apiRequest(`/attendance-records/${recordId}`, 'PUT', {
+        status: newStatus,
+      });
       // Re-fetch attendance records for the current session to reflect changes
-      const updatedData = await apiRequest(`/sessions/${selectedSession}/attendance`);
+      const updatedData = await apiRequest(
+        `/sessions/${selectedSession}/attendance`
+      );
       setAttendanceRecords(updatedData || []);
       setError(null);
     } catch (err) {
@@ -81,12 +88,12 @@ function TeacherAttendancePage() {
       setLoading(false);
     }
   };
-  
+
   const getSessionDisplayInfo = (sessionId) => {
-    const session = sessions.find(s => s.session_id === parseInt(sessionId));
+    const session = sessions.find((s) => s.session_id === parseInt(sessionId));
     if (!session) return 'Session details not found';
-    const classInfo = classes.find(c => c.class_id === session.class_id);
-    const roomInfo = rooms.find(r => r.room_id === session.room_id);
+    const classInfo = classes.find((c) => c.class_id === session.class_id);
+    const roomInfo = rooms.find((r) => r.room_id === session.room_id);
     return `${classInfo ? classInfo.name : 'Unknown Class'} - ${roomInfo ? roomInfo.name : 'Unknown Room'} - ${new Date(session.session_date).toLocaleDateString()} ${session.start_time}-${session.end_time}`;
   };
 
@@ -101,14 +108,14 @@ function TeacherAttendancePage() {
 
       <div>
         <label htmlFor="session-select">Select Session:</label>
-        <select 
-          id="session-select" 
-          value={selectedSession} 
+        <select
+          id="session-select"
+          value={selectedSession}
           onChange={(e) => setSelectedSession(e.target.value)}
           disabled={loading || sessions.length === 0}
         >
           <option value="">-- Select a Session --</option>
-          {sessions.map(session => (
+          {sessions.map((session) => (
             <option key={session.session_id} value={session.session_id}>
               {getSessionDisplayInfo(session.session_id)}
             </option>
@@ -120,31 +127,43 @@ function TeacherAttendancePage() {
 
       {selectedSession && !loading && (
         <>
-          <h2>Attendance for: {sessions.find(s=>s.session_id === parseInt(selectedSession)) ? getSessionDisplayInfo(selectedSession) : 'Selected Session'}</h2>
+          <h2>
+            Attendance for:{' '}
+            {sessions.find((s) => s.session_id === parseInt(selectedSession))
+              ? getSessionDisplayInfo(selectedSession)
+              : 'Selected Session'}
+          </h2>
           {attendanceRecords.length > 0 ? (
             <table>
               <thead>
                 <tr>
                   <th>Record ID</th>
                   <th>Student ID</th>
-                  <th>Student Name</th> {/* Assuming student details are part of the record */}                  
+                  <th>Student Name</th>{' '}
+                  {/* Assuming student details are part of the record */}
                   <th>Timestamp</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {attendanceRecords.map(record => (
+                {attendanceRecords.map((record) => (
                   <tr key={record.record_id}>
                     <td>{record.record_id}</td>
                     <td>{record.student_id}</td>
-                    <td>{record.student_name || 'N/A'}</td> {/* Adjust if student_name is available */}                    
+                    <td>{record.student_name || 'N/A'}</td>{' '}
+                    {/* Adjust if student_name is available */}
                     <td>{new Date(record.timestamp).toLocaleString()}</td>
                     <td>{record.status}</td>
                     <td>
-                      <select 
-                        value={record.status} 
-                        onChange={(e) => handleUpdateAttendance(record.record_id, e.target.value)}
+                      <select
+                        value={record.status}
+                        onChange={(e) =>
+                          handleUpdateAttendance(
+                            record.record_id,
+                            e.target.value
+                          )
+                        }
                         disabled={loading}
                       >
                         <option value="present">Present</option>
@@ -158,14 +177,21 @@ function TeacherAttendancePage() {
               </tbody>
             </table>
           ) : (
-            <p>No attendance records found for this session, or no students were expected.</p>
+            <p>
+              No attendance records found for this session, or no students were
+              expected.
+            </p>
           )}
         </>
       )}
-      {!selectedSession && !loading && sessions.length > 0 && <p>Please select a session to view attendance.</p>}
-      {!selectedSession && !loading && sessions.length === 0 && <p>No sessions available. Please schedule a session first.</p>}
+      {!selectedSession && !loading && sessions.length > 0 && (
+        <p>Please select a session to view attendance.</p>
+      )}
+      {!selectedSession && !loading && sessions.length === 0 && (
+        <p>No sessions available. Please schedule a session first.</p>
+      )}
     </div>
   );
 }
 
-export default TeacherAttendancePage; 
+export default TeacherAttendancePage;

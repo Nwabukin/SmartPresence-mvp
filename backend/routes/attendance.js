@@ -6,7 +6,7 @@ const ROLES = require('../utils/roles');
 
 const VALID_ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'];
 
-// --- Manually Update an Attendance Record (Admin / Teacher who owns class) ---
+// --- Manually Update an Attendance Record (Teacher who owns class only) ---
 // PUT /api/attendance/:recordId
 router.put('/:recordId', authMiddleware, async (req, res) => {
   const { recordId } = req.params;
@@ -51,22 +51,21 @@ router.put('/:recordId', authMiddleware, async (req, res) => {
     }
     const { class_id } = sessionResult.rows[0];
 
-    // 3. Authorization check (Admin or Teacher who owns the class)
-    let authorized = false;
-    if (requestingUserRole === ROLES.ADMIN) {
-      authorized = true;
-    } else if (requestingUserRole === ROLES.TEACHER) {
-      const classOwnerResult = await db.query(
-        'SELECT teacher_id FROM classes WHERE class_id = $1',
-        [class_id]
-      );
-      if (classOwnerResult.rows.length > 0 && classOwnerResult.rows[0].teacher_id === requestingUserId) {
-        authorized = true;
-      }
+    // 3. Authorization check (Only Teacher who owns the class)
+    if (requestingUserRole !== ROLES.TEACHER) {
+      return res.status(403).json({ error: 'Forbidden: Only teachers can modify attendance records.' });
     }
 
-    if (!authorized) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to modify this attendance record.' });
+    const classOwnerResult = await db.query(
+      'SELECT teacher_id FROM classes WHERE class_id = $1',
+      [class_id]
+    );
+    if (classOwnerResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Associated class not found.' });
+    }
+    
+    if (classOwnerResult.rows[0].teacher_id !== requestingUserId) {
+      return res.status(403).json({ error: 'Forbidden: You can only modify attendance for your own classes.' });
     }
 
     // 4. Update the attendance record

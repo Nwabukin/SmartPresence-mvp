@@ -68,8 +68,14 @@ function TeacherClassManagementPage() {
       fetchClasses(); // Re-fetch classes to show changes
       closeModal();
     } catch (err) {
-      console.error(`Error ${modalMode === 'create' ? 'creating' : 'updating'} class:`, err);
-      setFormSubmissionError(err.message || `Failed to ${modalMode === 'create' ? 'create' : 'update'} class.`);
+      console.error(
+        `Error ${modalMode === 'create' ? 'creating' : 'updating'} class:`,
+        err
+      );
+      setFormSubmissionError(
+        err.message ||
+          `Failed to ${modalMode === 'create' ? 'create' : 'update'} class.`
+      );
     }
   };
 
@@ -100,9 +106,13 @@ function TeacherClassManagementPage() {
   return (
     <div>
       <h1>My Classes (Teacher)</h1>
-      <button onClick={() => openModal('create')} style={{marginBottom: 15}}>Create New Class</button>
+      <button onClick={() => openModal('create')} style={{ marginBottom: 15 }}>
+        Create New Class
+      </button>
 
-      {error && !classes.length && <p style={{color: 'red'}}>Error: {error}</p>}
+      {error && !classes.length && (
+        <p style={{ color: 'red' }}>Error: {error}</p>
+      )}
       {classes.length > 0 ? (
         <table>
           <thead>
@@ -122,30 +132,47 @@ function TeacherClassManagementPage() {
                 <td>{cls.course_code}</td>
                 <td>{cls.description || 'N/A'}</td>
                 <td>
-                  <button onClick={() => openModal('edit', cls)} style={{marginRight: '5px'}}>Edit</button>
-                  <button onClick={() => handleDeleteClass(cls.class_id)}>Delete</button>
+                  <button
+                    onClick={() => openModal('edit', cls)}
+                    style={{ marginRight: '5px' }}
+                  >
+                    Edit
+                  </button>
+                  <button onClick={() => handleDeleteClass(cls.class_id)}>
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        !error && !loading && <p>No classes found. Click "Create New Class" to add one.</p>
+        !error &&
+        !loading && (
+          <p>No classes found. Click "Create New Class" to add one.</p>
+        )
       )}
 
       {isModalOpen && (
-        <Modal onClose={closeModal} title={modalMode === 'create' ? 'Create New Class' : 'Edit Class'}>
+        <Modal
+          onClose={closeModal}
+          title={modalMode === 'create' ? 'Create New Class' : 'Edit Class'}
+        >
           <ClassForm
             onSubmit={handleFormSubmit}
             initialData={modalMode === 'edit' ? currentClass : {}}
             onCancel={closeModal}
             isEditMode={modalMode === 'edit'}
           />
-          {formSubmissionError && <p style={{ color: 'red', marginTop: '10px' }}>{formSubmissionError}</p>}
+          {formSubmissionError && (
+            <p style={{ color: 'red', marginTop: '10px' }}>
+              {formSubmissionError}
+            </p>
+          )}
         </Modal>
       )}
     </div>
   );
 }
 
-export default TeacherClassManagementPage; 
+export default TeacherClassManagementPage;

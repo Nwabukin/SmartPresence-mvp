@@ -53,6 +53,7 @@ wheels/
 env/
 venv/
 ENV/
+Docs/
 
 # Flutter ignores (for mobile-app later)
 .flutter-plugins
