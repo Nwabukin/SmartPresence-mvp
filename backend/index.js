@@ -1,7 +1,14 @@
 const express = require('express');
+const cors = require('cors');
 const db = require('./db'); // Import the query function
 const app = express();
 const port = process.env.PORT || 3000;
+
+// CORS middleware to allow requests from frontend
+app.use(cors({
+  origin: 'http://localhost:5173', // Frontend URL
+  credentials: true
+}));
 
 // Middleware to parse JSON bodies
 app.use(express.json());
