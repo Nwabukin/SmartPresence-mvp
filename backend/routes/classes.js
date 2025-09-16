@@ -7,15 +7,15 @@ const ROLES = require('../utils/roles'); // Roles
 // Placeholder for Class model structure (fields we expect for a class)
 // Example: { class_name: "Introduction to Programming", course_code: "CS101", teacher_id: 1 }
 
-// --- Create a new Class (Teacher/Admin) ---
+// --- Create a new Class (Teacher Only) ---
 // POST /api/classes
 router.post('/', authMiddleware, async (req, res) => {
-  if (![ROLES.ADMIN, ROLES.TEACHER].includes(req.user.role)) {
-    return res.status(403).json({ error: 'Forbidden: Insufficient privileges to create a class.' });
+  if (req.user.role !== ROLES.TEACHER) {
+    return res.status(403).json({ error: 'Forbidden: Only teachers can create classes.' });
   }
 
   const { name, course_code, description } = req.body;
-  const teacher_id = req.user.id; // The logged-in teacher or admin becomes the teacher_id
+  const teacher_id = req.user.id; // The logged-in teacher becomes the teacher_id
 
   if (!name || !course_code) {
     return res.status(400).json({ error: 'Missing required fields (name, course_code).' });
@@ -87,7 +87,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Update a Class by ID (Owner Teacher/Admin) ---
+// --- Update a Class by ID (Owner Teacher Only) ---
 // PUT /api/classes/:id
 router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
@@ -113,9 +113,13 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     const classOwnerId = classResult.rows[0].teacher_id;
 
-    // Authorization: Admin or the teacher who owns the class
-    if (requestingUserRole !== ROLES.ADMIN && classOwnerId !== requestingUserId) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to update this class.' });
+    // Authorization: Only the teacher who owns the class
+    if (requestingUserRole !== ROLES.TEACHER) {
+      return res.status(403).json({ error: 'Forbidden: Only teachers can update classes.' });
+    }
+    
+    if (classOwnerId !== requestingUserId) {
+      return res.status(403).json({ error: 'Forbidden: You can only update your own classes.' });
     }
 
     // Build the update query dynamically
@@ -158,7 +162,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Delete a Class by ID (Owner Teacher/Admin) ---
+// --- Delete a Class by ID (Owner Teacher Only) ---
 // DELETE /api/classes/:id
 router.delete('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
@@ -179,9 +183,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     const classOwnerId = classResult.rows[0].teacher_id;
 
-    // Authorization: Admin or the teacher who owns the class
-    if (requestingUserRole !== ROLES.ADMIN && classOwnerId !== requestingUserId) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this class.' });
+    // Authorization: Only the teacher who owns the class
+    if (requestingUserRole !== ROLES.TEACHER) {
+      return res.status(403).json({ error: 'Forbidden: Only teachers can delete classes.' });
+    }
+    
+    if (classOwnerId !== requestingUserId) {
+      return res.status(403).json({ error: 'Forbidden: You can only delete your own classes.' });
     }
 
     const result = await db.query('DELETE FROM classes WHERE class_id = $1 RETURNING *', [classId]);
@@ -199,7 +207,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Enroll a Student in a Class (Owner Teacher/Admin) ---
+// --- Enroll a Student in a Class (Owner Teacher Only) ---
 // POST /api/classes/:classId/students
 router.post('/:classId/students', authMiddleware, async (req, res) => {
   const { classId } = req.params;
@@ -214,14 +222,19 @@ router.post('/:classId/students', authMiddleware, async (req, res) => {
   }
 
   try {
-    // 1. Verify class exists and check ownership/admin role
+    // 1. Verify class exists and check ownership
     const classResult = await db.query('SELECT teacher_id FROM classes WHERE class_id = $1', [classIdInt]);
     if (classResult.rows.length === 0) {
       return res.status(404).json({ error: 'Class not found.' });
     }
     const classOwnerId = classResult.rows[0].teacher_id;
-    if (requestingUserRole !== ROLES.ADMIN && classOwnerId !== requestingUserId) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to enroll students in this class.' });
+    
+    if (requestingUserRole !== ROLES.TEACHER) {
+      return res.status(403).json({ error: 'Forbidden: Only teachers can enroll students in classes.' });
+    }
+    
+    if (classOwnerId !== requestingUserId) {
+      return res.status(403).json({ error: 'Forbidden: You can only enroll students in your own classes.' });
     }
 
     // 2. Verify student exists and is a student
@@ -248,7 +261,7 @@ router.post('/:classId/students', authMiddleware, async (req, res) => {
   }
 });
 
-// --- Unenroll a Student from a Class (Owner Teacher/Admin) ---
+// --- Unenroll a Student from a Class (Owner Teacher Only) ---
 // DELETE /api/classes/:classId/students/:studentId
 router.delete('/:classId/students/:studentId', authMiddleware, async (req, res) => {
   const { classId, studentId } = req.params;
@@ -262,14 +275,19 @@ router.delete('/:classId/students/:studentId', authMiddleware, async (req, res) 
   }
 
   try {
-    // 1. Verify class exists and check ownership/admin role
+    // 1. Verify class exists and check ownership
     const classResult = await db.query('SELECT teacher_id FROM classes WHERE class_id = $1', [classIdInt]);
     if (classResult.rows.length === 0) {
       return res.status(404).json({ error: 'Class not found.' });
     }
     const classOwnerId = classResult.rows[0].teacher_id;
-    if (requestingUserRole !== ROLES.ADMIN && classOwnerId !== requestingUserId) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to unenroll students from this class.' });
+    
+    if (requestingUserRole !== ROLES.TEACHER) {
+      return res.status(403).json({ error: 'Forbidden: Only teachers can unenroll students from classes.' });
+    }
+    
+    if (classOwnerId !== requestingUserId) {
+      return res.status(403).json({ error: 'Forbidden: You can only unenroll students from your own classes.' });
     }
 
     // 2. Perform unenrollment
@@ -288,7 +306,7 @@ router.delete('/:classId/students/:studentId', authMiddleware, async (req, res) 
   }
 });
 
-// --- List Students Enrolled in a Class (Owner Teacher/Admin) ---
+// --- List Students Enrolled in a Class (Admin can view all, Owner Teacher) ---
 // GET /api/classes/:classId/students
 router.get('/:classId/students', authMiddleware, async (req, res) => {
   const { classId } = req.params;
@@ -301,13 +319,19 @@ router.get('/:classId/students', authMiddleware, async (req, res) => {
   }
 
   try {
-    // 1. Verify class exists and check ownership/admin role for viewing enrollments
+    // 1. Verify class exists and check ownership for viewing enrollments
     const classResult = await db.query('SELECT teacher_id FROM classes WHERE class_id = $1', [classIdInt]);
     if (classResult.rows.length === 0) {
       return res.status(404).json({ error: 'Class not found.' });
     }
     const classOwnerId = classResult.rows[0].teacher_id;
-    if (requestingUserRole !== ROLES.ADMIN && classOwnerId !== requestingUserId) {
+    
+    // Admin can view all enrollments, teachers can only view their own
+    if (requestingUserRole === ROLES.ADMIN) {
+      // Admin can view any class enrollments
+    } else if (requestingUserRole === ROLES.TEACHER && classOwnerId === requestingUserId) {
+      // Teacher can view their own class enrollments
+    } else {
       return res.status(403).json({ error: 'Forbidden: You do not have permission to view enrollments for this class.' });
     }
 

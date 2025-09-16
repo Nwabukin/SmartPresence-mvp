@@ -1,11 +1,11 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
 /**
  * A component to protect routes that require authentication and optionally a specific role.
- * If the user is not authenticated or doesn't have the required role, 
+ * If the user is not authenticated or doesn't have the required role,
  * it redirects to the login page or an unauthorized page.
  * @param {{children: React.ReactNode, role?: string}} props
  */
@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children, role }) => {
 
   if (loading) {
     // Optional: Show a loading indicator while auth state is being determined
-    return <div>Loading...</div>; 
+    return <div>Loading...</div>;
   }
 
   if (!isAuthenticated) {
@@ -44,4 +44,4 @@ const ProtectedRoute = ({ children, role }) => {
   return children;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;
