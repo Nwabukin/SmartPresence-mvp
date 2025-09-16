@@ -230,10 +230,12 @@ p {
 .text-gray-500 { color: var(--gray-500); }
 .text-gray-600 { color: var(--gray-600); }
 .text-gray-700 { color: var(--gray-700); }
+.text-gray-800 { color: var(--gray-800); }
 .text-gray-900 { color: var(--gray-900); }
 .text-white { color: white; }
 .text-primary-600 { color: var(--primary-600); }
 .text-primary-100 { color: var(--primary-100); }
+.text-primary-50 { color: var(--primary-50); }
 
 .bg-white { background-color: white; }
 .bg-gray-50 { background-color: var(--gray-50); }
@@ -607,8 +609,8 @@ p {
   background-image: linear-gradient(to bottom right, var(--primary-50), var(--primary-100));
 }
 
-/* Dark mode support (optional) */
-@media (prefers-color-scheme: dark) {
+/* Dark mode support (optional) - disabled for now to ensure proper contrast */
+/* @media (prefers-color-scheme: dark) {
   :root {
     --gray-50: #1f2937;
     --gray-100: #374151;
@@ -621,4 +623,4 @@ p {
     --gray-800: #f9fafb;
     --gray-900: #ffffff;
   }
-}
+} */
