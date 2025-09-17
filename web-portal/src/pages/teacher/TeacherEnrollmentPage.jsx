@@ -261,20 +261,21 @@ function TeacherEnrollmentPage() {
               <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">
                 Class
               </label>
-              <select
-                id="class-select"
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                disabled={loading || classes.length === 0}
-                className="select select-bordered w-full"
-              >
-                <option value="">-- Select a Class --</option>
-                {classes.map((cls) => (
-                  <option key={cls.class_id} value={cls.class_id}>
-                    {cls.name} ({cls.course_code})
-                  </option>
-                ))}
-              </select>
+              <div className="select select-bordered">
+                <select
+                  id="class-select"
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  disabled={loading || classes.length === 0}
+                >
+                  <option value="">-- Select a Class --</option>
+                  {classes.map((cls) => (
+                    <option key={cls.class_id} value={cls.class_id}>
+                      {cls.name} ({cls.course_code})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>

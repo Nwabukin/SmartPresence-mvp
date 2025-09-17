@@ -138,7 +138,7 @@ const sessionSchemas = {
   }),
 
   getAttendance: Joi.object({
-    id: commonPatterns.id,
+    sessionId: commonPatterns.id,
   }),
 };
 

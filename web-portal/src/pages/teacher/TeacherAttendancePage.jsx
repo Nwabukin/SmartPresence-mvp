@@ -220,20 +220,21 @@ function TeacherAttendancePage() {
               <label htmlFor="session-select" className="block text-sm font-medium text-gray-700 mb-2">
                 Session
               </label>
-              <select
-                id="session-select"
-                value={selectedSession}
-                onChange={(e) => setSelectedSession(e.target.value)}
-                disabled={loading || sessions.length === 0}
-                className="select select-bordered w-full"
-              >
-                <option value="">-- Select a Session --</option>
-                {sessions.map((session) => (
-                  <option key={session.session_id} value={session.session_id}>
-                    {getSessionDisplayInfo(session.session_id)}
-                  </option>
-                ))}
-              </select>
+              <div className="select select-bordered">
+                <select
+                  id="session-select"
+                  value={selectedSession}
+                  onChange={(e) => setSelectedSession(e.target.value)}
+                  disabled={loading || sessions.length === 0}
+                >
+                  <option value="">-- Select a Session --</option>
+                  {sessions.map((session) => (
+                    <option key={session.session_id} value={session.session_id}>
+                      {getSessionDisplayInfo(session.session_id)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -269,7 +270,7 @@ function TeacherAttendancePage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
                     <p className="text-gray-900">
-                      {new Date(selectedSessionData.session_date).toLocaleDateString('en-US', {
+                      {new Date(selectedSessionData.start_time).toLocaleDateString('en-US', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -277,7 +278,15 @@ function TeacherAttendancePage() {
                       })}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {selectedSessionData.start_time} - {selectedSessionData.end_time}
+                      {new Date(selectedSessionData.start_time).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: true 
+                      })} - {new Date(selectedSessionData.end_time).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: true 
+                      })}
                     </p>
                   </div>
                 </div>
@@ -360,22 +369,23 @@ function TeacherAttendancePage() {
                             </td>
                             <td>{getStatusBadge(record.status)}</td>
                             <td>
-                              <select
-                                value={record.status}
-                                onChange={(e) =>
-                                  handleUpdateAttendance(
-                                    record.record_id,
-                                    e.target.value
-                                  )
-                                }
-                                disabled={loading}
-                                className="select select-bordered select-sm"
-                              >
-                                <option value="present">Present</option>
-                                <option value="absent">Absent</option>
-                                <option value="late">Late</option>
-                                <option value="excused">Excused</option>
-                              </select>
+                              <div className="select select-bordered select-sm">
+                                <select
+                                  value={record.status}
+                                  onChange={(e) =>
+                                    handleUpdateAttendance(
+                                      record.record_id,
+                                      e.target.value
+                                    )
+                                  }
+                                  disabled={loading}
+                                >
+                                  <option value="present">Present</option>
+                                  <option value="absent">Absent</option>
+                                  <option value="late">Late</option>
+                                  <option value="excused">Excused</option>
+                                </select>
+                              </div>
                             </td>
                           </tr>
                         ))}
