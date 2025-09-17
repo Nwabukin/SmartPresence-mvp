@@ -49,12 +49,16 @@ const SessionForm = ({
       return;
     }
     setFormError('');
+    
+    // Combine date and time into ISO timestamps
+    const startDateTime = new Date(`${sessionDate}T${startTime}:00`).toISOString();
+    const endDateTime = new Date(`${sessionDate}T${endTime}:00`).toISOString();
+    
     onSubmit({
       class_id: parseInt(classId),
       room_id: parseInt(roomId),
-      session_date: sessionDate,
-      start_time: startTime,
-      end_time: endTime,
+      start_time: startDateTime,
+      end_time: endDateTime,
     });
   };
 
