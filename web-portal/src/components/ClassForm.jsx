@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const ClassForm = ({
   onSubmit,
-  initialData = {},
+  initialData = null,
   onCancel,
   isEditMode = false,
 }) => {
@@ -12,10 +12,12 @@ const ClassForm = ({
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
-    setName(initialData.name || '');
-    setCourseCode(initialData.course_code || '');
-    setDescription(initialData.description || '');
-  }, [initialData]);
+    if (isEditMode && initialData) {
+      setName(initialData.name || '');
+      setCourseCode(initialData.course_code || '');
+      setDescription(initialData.description || '');
+    }
+  }, [isEditMode, initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -47,7 +49,10 @@ const ClassForm = ({
           id="className"
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+          }}
+          autoFocus
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -63,7 +68,9 @@ const ClassForm = ({
           id="courseCode"
           type="text"
           value={courseCode}
-          onChange={(e) => setCourseCode(e.target.value)}
+          onChange={(e) => {
+            setCourseCode(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -78,7 +85,9 @@ const ClassForm = ({
         <textarea
           id="description"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) => {
+            setDescription(e.target.value);
+          }}
           rows={3}
           style={{ width: '100%', padding: '8px' }}
         />

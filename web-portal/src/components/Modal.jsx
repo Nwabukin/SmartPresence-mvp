@@ -1,7 +1,33 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
-const Modal = ({ show, onClose, title, children }) => {
-  if (!show) {
+const Modal = ({ show = true, onClose, title, children }) => {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    if (!show) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onDocKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (onClose) onClose();
+      }
+    };
+    document.addEventListener('keydown', onDocKeyDown, { capture: true });
+    if (dialogRef.current) {
+      const firstFocusable = dialogRef.current.querySelector(
+        'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
+      );
+      if (firstFocusable && typeof firstFocusable.focus === 'function') {
+        firstFocusable.focus();
+      }
+    }
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onDocKeyDown, { capture: true });
+    };
+  }, [show]);
+
+  if (show === false) {
     return null;
   }
   return (
@@ -18,8 +44,12 @@ const Modal = ({ show, onClose, title, children }) => {
         justifyContent: 'center',
         zIndex: 1000,
       }}
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
     >
       <div
+        ref={dialogRef}
         style={{
           backgroundColor: 'white',
           padding: 20,
@@ -27,6 +57,11 @@ const Modal = ({ show, onClose, title, children }) => {
           minWidth: 300,
           boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
         }}
+        tabIndex={-1}
+        onClick={(e) => { e.stopPropagation(); }}
+        onMouseDown={(e) => { e.stopPropagation(); }}
+        onMouseUp={(e) => { e.stopPropagation(); }}
+        onKeyDown={(e) => { e.stopPropagation(); }}
       >
         <h2>{title}</h2>
         {children}

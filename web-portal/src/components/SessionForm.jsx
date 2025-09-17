@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const SessionForm = ({
   onSubmit,
-  initialData = {},
+  initialData = null,
   classes = [],
   rooms = [],
   onCancel,
@@ -19,7 +19,6 @@ const SessionForm = ({
     if (isEditMode && initialData) {
       setClassId(initialData.class_id || '');
       setRoomId(initialData.room_id || '');
-      // Assuming session_date is in YYYY-MM-DD format from backend for date input
       setSessionDate(
         initialData.session_date
           ? new Date(initialData.session_date).toISOString().split('T')[0]
@@ -27,15 +26,8 @@ const SessionForm = ({
       );
       setStartTime(initialData.start_time || '');
       setEndTime(initialData.end_time || '');
-    } else {
-      // Reset form for create mode or if no initial data
-      setClassId('');
-      setRoomId('');
-      setSessionDate('');
-      setStartTime('');
-      setEndTime('');
     }
-  }, [initialData, isEditMode]);
+  }, [isEditMode, initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -73,7 +65,10 @@ const SessionForm = ({
         <select
           id="class"
           value={classId}
-          onChange={(e) => setClassId(e.target.value)}
+          onChange={(e) => {
+            setClassId(e.target.value);
+          }}
+          autoFocus
           required
           style={{ width: '100%', padding: '8px' }}
         >
@@ -92,7 +87,9 @@ const SessionForm = ({
         <select
           id="room"
           value={roomId}
-          onChange={(e) => setRoomId(e.target.value)}
+          onChange={(e) => {
+            setRoomId(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         >
@@ -115,7 +112,9 @@ const SessionForm = ({
           id="sessionDate"
           type="date"
           value={sessionDate}
-          onChange={(e) => setSessionDate(e.target.value)}
+          onChange={(e) => {
+            setSessionDate(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -131,7 +130,9 @@ const SessionForm = ({
           id="startTime"
           type="time"
           value={startTime}
-          onChange={(e) => setStartTime(e.target.value)}
+          onChange={(e) => {
+            setStartTime(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -147,7 +148,9 @@ const SessionForm = ({
           id="endTime"
           type="time"
           value={endTime}
-          onChange={(e) => setEndTime(e.target.value)}
+          onChange={(e) => {
+            setEndTime(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />

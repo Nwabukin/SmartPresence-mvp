@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const RoomForm = ({
   onSubmit,
-  initialData = {},
+  initialData = null,
   onCancel,
   isEditMode = false,
 }) => {
@@ -12,10 +12,12 @@ const RoomForm = ({
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
-    setName(initialData.name || '');
-    setWifiSsid(initialData.wifi_ssid || '');
-    setBeaconId(initialData.bluetooth_beacon_id || '');
-  }, [initialData]);
+    if (isEditMode && initialData) {
+      setName(initialData.name || '');
+      setWifiSsid(initialData.wifi_ssid || '');
+      setBeaconId(initialData.bluetooth_beacon_id || '');
+    }
+  }, [isEditMode, initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -47,7 +49,10 @@ const RoomForm = ({
           id="roomName"
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+          }}
+          autoFocus
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -63,7 +68,9 @@ const RoomForm = ({
           id="wifiSsid"
           type="text"
           value={wifiSsid}
-          onChange={(e) => setWifiSsid(e.target.value)}
+          onChange={(e) => {
+            setWifiSsid(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -79,7 +86,9 @@ const RoomForm = ({
           id="beaconId"
           type="text"
           value={beaconId}
-          onChange={(e) => setBeaconId(e.target.value)}
+          onChange={(e) => {
+            setBeaconId(e.target.value);
+          }}
           style={{ width: '100%', padding: '8px' }}
         />
       </div>

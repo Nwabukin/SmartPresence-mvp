@@ -9,7 +9,7 @@ const ROLES = {
 
 const UserForm = ({
   onSubmit,
-  initialData = {},
+  initialData = null,
   onCancel,
   isEditMode = false,
 }) => {
@@ -21,14 +21,14 @@ const UserForm = ({
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
-    setFirstName(initialData.first_name || '');
-    setLastName(initialData.last_name || '');
-    setEmail(initialData.email || '');
-    setRole(initialData.role || ROLES.STUDENT);
-    if (isEditMode) {
-      setPassword(''); // Don't populate password in edit mode
+    if (isEditMode && initialData) {
+      setFirstName(initialData.first_name || '');
+      setLastName(initialData.last_name || '');
+      setEmail(initialData.email || '');
+      setRole(initialData.role || ROLES.STUDENT);
+      setPassword('');
     }
-  }, [initialData, isEditMode]);
+  }, [isEditMode, initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -71,7 +71,10 @@ const UserForm = ({
           id="firstName"
           type="text"
           value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          onChange={(e) => {
+            setFirstName(e.target.value);
+          }}
+          autoFocus
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -82,7 +85,9 @@ const UserForm = ({
           id="lastName"
           type="text"
           value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          onChange={(e) => {
+            setLastName(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -93,7 +98,9 @@ const UserForm = ({
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -105,7 +112,9 @@ const UserForm = ({
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
             required
             style={{ width: '100%', padding: '8px' }}
           />
@@ -116,7 +125,9 @@ const UserForm = ({
         <select
           id="role"
           value={role}
-          onChange={(e) => setRole(e.target.value)}
+          onChange={(e) => {
+            setRole(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         >
