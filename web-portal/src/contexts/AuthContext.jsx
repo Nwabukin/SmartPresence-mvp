@@ -7,7 +7,14 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('smartpresence_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [token, setToken] = useState(
     localStorage.getItem('smartpresence_token')
   );
@@ -17,12 +24,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const currentToken = localStorage.getItem('smartpresence_token');
     if (currentToken) {
-      // TODO: Optionally, verify token with a backend endpoint here
-      // For now, assume token is valid if it exists and try to fetch user profile
-      // This part would require a /users/me or /auth/profile endpoint on the backend
-      // For this iteration, we'll just set the token and leave user as null until login
       setToken(currentToken);
-      // Example: fetchUserProfile().then(setUser).catch(() => logout());
+      // Hydrate user from storage if available
+      try {
+        const storedUser = localStorage.getItem('smartpresence_user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch {}
     }
     setLoading(false);
   }, []);
@@ -39,6 +48,10 @@ export const AuthProvider = ({ children }) => {
         storeToken(response.token);
         setToken(response.token);
         setUser(response.user);
+        // Persist user to survive reloads
+        try {
+          localStorage.setItem('smartpresence_user', JSON.stringify(response.user));
+        } catch {}
         navigate('/'); // Redirect to home page after successful login
         return true;
       } else {
@@ -58,6 +71,9 @@ export const AuthProvider = ({ children }) => {
     removeToken();
     setToken(null);
     setUser(null);
+    try {
+      localStorage.removeItem('smartpresence_user');
+    } catch {}
     navigate('/login'); // Redirect to login page after logout
   };
 

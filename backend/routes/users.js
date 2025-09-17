@@ -4,85 +4,86 @@ const db = require('../db'); // Database connection
 const authMiddleware = require('../middleware/auth'); // Authentication middleware
 const ROLES = require('../utils/roles'); // Assuming roles are defined centrally
 const bcrypt = require('bcryptjs'); // Need bcrypt for hashing password
+const { validate, schemas } = require('../utils/validation'); // Input validation
+const { 
+  asyncHandler, 
+  successResponse, 
+  AuthenticationError, 
+  AuthorizationError, 
+  NotFoundError, 
+  ConflictError, 
+  DatabaseError 
+} = require('../utils/errorHandler');
 
 // --- Get All Users (Admin/Teacher Only) ---
 // GET /api/users/
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, asyncHandler(async (req, res) => {
   // Check user role from the token (added by authMiddleware)
   if (![ROLES.ADMIN, ROLES.TEACHER].includes(req.user.role)) {
-    return res.status(403).json({ error: 'Forbidden: Insufficient privileges.' });
+    throw new AuthorizationError('Insufficient privileges to view users');
   }
 
-  try {
-    // Fetch all users and join possible profiles. We'll project a normalized shape with optional profile data.
-    const result = await db.query(
-      `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
-              sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
-              tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
-         FROM users u
-    LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
-    LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
-        ORDER BY u.created_at DESC`
-    );
+  // Fetch all users and join possible profiles. We'll project a normalized shape with optional profile data.
+  const result = await db.query(
+    `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+            sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+            tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
+       FROM users u
+  LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+  LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+      ORDER BY u.created_at DESC`
+  );
 
-    const users = result.rows.map((r) => {
-      const base = {
-        user_id: r.user_id,
-        email: r.email,
-        first_name: r.first_name,
-        last_name: r.last_name,
-        role: r.role,
-        created_at: r.created_at,
+  const users = result.rows.map((r) => {
+    const base = {
+      user_id: r.user_id,
+      email: r.email,
+      first_name: r.first_name,
+      last_name: r.last_name,
+      role: r.role,
+      created_at: r.created_at,
+    };
+    if (r.role === ROLES.STUDENT) {
+      return {
+        ...base,
+        profile: {
+          matric_no: r.student_matric_no || null,
+          department: r.student_department || null,
+          course: r.student_course || null,
+          level: r.student_level || null,
+          phone: r.student_phone || null,
+        },
       };
-      if (r.role === ROLES.STUDENT) {
-        return {
-          ...base,
-          profile: {
-            matric_no: r.student_matric_no || null,
-            department: r.student_department || null,
-            course: r.student_course || null,
-            level: r.student_level || null,
-            phone: r.student_phone || null,
-          },
-        };
-      }
-      if (r.role === ROLES.TEACHER) {
-        return {
-          ...base,
-          profile: {
-            lecturer_no: r.teacher_lecturer_no || null,
-            department: r.teacher_department || null,
-            office: r.teacher_office || null,
-            phone: r.teacher_phone || null,
-          },
-        };
-      }
-      return base;
-    });
+    }
+    if (r.role === ROLES.TEACHER) {
+      return {
+        ...base,
+        profile: {
+          lecturer_no: r.teacher_lecturer_no || null,
+          department: r.teacher_department || null,
+          office: r.teacher_office || null,
+          phone: r.teacher_phone || null,
+        },
+      };
+    }
+    return base;
+  });
 
-    res.json(users);
-  } catch (err) {
-    console.error('Error fetching users:', err);
-    res.status(500).json({ error: 'Server error fetching users.' });
-  }
-});
+  // Return raw array to match existing frontend expectations
+  res.json(users);
+}));
 
 // --- Get Specific User by ID ---
 // GET /api/users/:id
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', authMiddleware, validate(schemas.user.getById, 'params'), asyncHandler(async (req, res) => {
   const requestedUserId = parseInt(req.params.id, 10);
   const requestingUserId = req.user.id;
   const requestingUserRole = req.user.role;
 
-  // Validate requested ID
-  if (isNaN(requestedUserId)) {
-    return res.status(400).json({ error: 'Invalid user ID format.' });
-  }
-
   // Authorization Check:
   // Allow if admin/teacher OR if the user is requesting their own data
   if (!([ROLES.ADMIN, ROLES.TEACHER].includes(requestingUserRole) || requestedUserId === requestingUserId)) {
-    return res.status(403).json({ error: 'Forbidden: You do not have permission to view this user.' });
+    throw new AuthorizationError('You do not have permission to view this user');
   }
 
   try {
@@ -140,11 +141,11 @@ router.get('/:id', authMiddleware, async (req, res) => {
     console.error(`Error fetching user ${requestedUserId}:`, err);
     res.status(500).json({ error: 'Server error fetching user.' });
   }
-});
+}));
 
 // --- Update User by ID ---
 // PUT /api/users/:id
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, validate(schemas.user.getById, 'params'), validate(schemas.user.update), async (req, res) => {
   const requestedUserId = parseInt(req.params.id, 10);
   const { firstName, lastName, role, profileStudent, profileTeacher } = req.body; // Allow optional profile updates
   const requestingUser = req.user; // Contains requesting user's id and role
@@ -304,7 +305,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
 // --- Delete User by ID (Admin/Teacher Only) ---
 // DELETE /api/users/:id
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, validate(schemas.user.getById, 'params'), async (req, res) => {
   const requestedUserId = parseInt(req.params.id, 10);
   const requestingUserId = req.user.id;
   const requestingUserRole = req.user.role;
@@ -350,7 +351,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
 // --- Create New User (Admin Only) ---
 // POST /api/users/
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, validate(schemas.user.create), async (req, res) => {
   // 1. Authorization: Check if requester is Admin
   if (req.user.role !== ROLES.ADMIN) {
     return res.status(403).json({ error: 'Forbidden: Only administrators can create users.' });

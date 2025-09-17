@@ -1,6 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db'); // Import the query function
+const { 
+  globalErrorHandler, 
+  requestIdMiddleware, 
+  notFoundHandler 
+} = require('./utils/errorHandler');
+const logger = require('./utils/logger');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -12,6 +18,21 @@ app.use(cors({
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+
+// Request ID middleware for tracking
+app.use(requestIdMiddleware);
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.request(req, res, duration);
+  });
+  
+  next();
+});
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -58,6 +79,12 @@ app.get('/test-db', async (req, res) => {
     res.status(500).json({ success: false, error: 'Database query failed' });
   }
 });
+
+// Handle 404 for undefined routes
+app.use(notFoundHandler);
+
+// Global error handler (must be last)
+app.use(globalErrorHandler);
 
 app.listen(port, () => {
   console.log(`SmartPresence backend listening on port ${port}`);

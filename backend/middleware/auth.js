@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); // Ensure environment variables are loaded
+const { AuthenticationError } = require('../utils/errorHandler');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -15,13 +16,13 @@ module.exports = function (req, res, next) {
 
   // Check if not token
   if (!authHeader) {
-    return res.status(401).json({ msg: 'No token, authorization denied' });
+    throw new AuthenticationError('No token, authorization denied');
   }
 
   // Check if token is in the correct format 'Bearer <token>'
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    return res.status(401).json({ msg: 'Token is not valid (Format: Bearer <token>)' });
+    throw new AuthenticationError('Token is not valid (Format: Bearer <token>)');
   }
 
   const token = parts[1];
@@ -38,6 +39,6 @@ module.exports = function (req, res, next) {
     next(); // Pass control to the next middleware or route handler
   } catch (err) {
     console.error('Token verification failed:', err.message);
-    res.status(401).json({ msg: 'Token is not valid' });
+    throw new AuthenticationError('Token is not valid');
   }
 }; 
