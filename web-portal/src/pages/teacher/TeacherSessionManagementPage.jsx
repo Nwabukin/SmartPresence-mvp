@@ -371,13 +371,13 @@ function TeacherSessionManagementPage() {
       </div>
 
       {/* Modal */}
-      {isModalOpen && (
-        <Modal
-          onClose={closeModal}
-          title={
-            modalMode === 'create' ? 'Schedule New Session' : 'Edit Session'
-          }
-        >
+      <Modal
+        show={isModalOpen}
+        onClose={closeModal}
+        title={
+          modalMode === 'create' ? 'Schedule New Session' : 'Edit Session'
+        }
+      >
           <SessionForm
             onSubmit={handleFormSubmit}
             initialData={currentSession}
@@ -396,8 +396,7 @@ function TeacherSessionManagementPage() {
               </div>
             </div>
           )}
-        </Modal>
-      )}
+      </Modal>
     </div>
   );
 }
