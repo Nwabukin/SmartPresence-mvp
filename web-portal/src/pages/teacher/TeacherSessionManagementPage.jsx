@@ -270,9 +270,9 @@ function TeacherSessionManagementPage() {
                         (r) => r.room_id === session.room_id
                       );
                       
-                      // Calculate duration
-                      const startTime = new Date(`2000-01-01T${session.start_time}`);
-                      const endTime = new Date(`2000-01-01T${session.end_time}`);
+                      // Calculate duration from ISO timestamps
+                      const startTime = new Date(session.start_time);
+                      const endTime = new Date(session.end_time);
                       const durationMs = endTime - startTime;
                       const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
                       const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -300,21 +300,33 @@ function TeacherSessionManagementPage() {
                           <td>
                             <div className="text-sm">
                               <div className="font-medium">
-                                {new Date(session.session_date).toLocaleDateString('en-US', {
+                                {startTime.toLocaleDateString('en-US', {
                                   weekday: 'short',
                                   month: 'short',
                                   day: 'numeric'
                                 })}
                               </div>
                               <div className="text-gray-500">
-                                {new Date(session.session_date).toLocaleDateString('en-US', {
+                                {startTime.toLocaleDateString('en-US', {
                                   year: 'numeric'
                                 })}
                               </div>
                             </div>
                           </td>
-                          <td className="font-mono text-sm">{session.start_time}</td>
-                          <td className="font-mono text-sm">{session.end_time}</td>
+                          <td className="font-mono text-sm">
+                            {startTime.toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </td>
+                          <td className="font-mono text-sm">
+                            {endTime.toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </td>
                           <td className="text-sm text-gray-600">{duration}</td>
                           <td>
                             <div className="flex gap-2">

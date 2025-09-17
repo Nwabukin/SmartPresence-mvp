@@ -19,14 +19,18 @@ const SessionForm = ({
     if (isEditMode && initialData) {
       setClassId(initialData.class_id || '');
       setRoomId(initialData.room_id || '');
-      // Assuming session_date is in YYYY-MM-DD format from backend for date input
-      setSessionDate(
-        initialData.session_date
-          ? new Date(initialData.session_date).toISOString().split('T')[0]
-          : ''
-      );
-      setStartTime(initialData.start_time || '');
-      setEndTime(initialData.end_time || '');
+      
+      // Extract date and time from ISO timestamps
+      if (initialData.start_time) {
+        const startDate = new Date(initialData.start_time);
+        setSessionDate(startDate.toISOString().split('T')[0]);
+        setStartTime(startDate.toTimeString().slice(0, 5)); // HH:MM format
+      }
+      
+      if (initialData.end_time) {
+        const endDate = new Date(initialData.end_time);
+        setEndTime(endDate.toTimeString().slice(0, 5)); // HH:MM format
+      }
     } else {
       // Reset form for create mode or if no initial data
       setClassId('');
