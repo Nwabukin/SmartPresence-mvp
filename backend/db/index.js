@@ -20,9 +20,29 @@ pool.on('connect', () => {
   console.log('Database pool connected');
 });
 
-// Export a query function that uses the pool
+// Helper to run a callback within a single-client transaction
+const withTransaction = async (callback) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {
+      // ignore rollback errors
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+// Export a query function and helpers
 module.exports = {
   query: (text, params) => pool.query(text, params),
-  // You can also export the pool directly if needed elsewhere
-  // pool: pool,
-}; 
+  pool,
+  withTransaction,
+};

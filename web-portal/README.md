@@ -21,3 +21,22 @@ If you are developing a production application, we recommend using TypeScript wi
 - **Formatting:** Code formatting is enforced by Prettier using the configuration in `.prettierrc.json`. Run `npm run format` to format code.
 - **Linting:** Code quality and potential errors are checked by ESLint using the configuration in `eslint.config.js`. Run `npm run lint` to check code.
 - **Comments:** Use comments primarily to explain _why_ something is done, not _what_ it does (code should be self-explanatory). Document component props and complex logic.
+
+## Admin: Creating Users with Profiles
+
+When creating users, select a role to reveal additional required fields.
+
+- Student fields:
+  - Matric No. (required)
+  - Department (required)
+  - Course (required)
+  - Level (required)
+  - Phone (optional)
+
+- Teacher fields:
+  - Lecturer ID/No. (required)
+  - Department (required)
+  - Office (optional)
+  - Phone (optional)
+
+The form sends these as `profileStudent` or `profileTeacher` to the backend `POST /api/users` endpoint.

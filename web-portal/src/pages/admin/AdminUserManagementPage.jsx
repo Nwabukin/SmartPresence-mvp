@@ -41,7 +41,15 @@ function AdminUserManagementPage() {
 
   const handleCreateUser = async (userData) => {
     try {
+      // Debug: log payload (without password value length only)
+      // eslint-disable-next-line no-console
+      console.log('[Admin] Create user payload', {
+        ...userData,
+        password: userData.password ? `len:${userData.password.length}` : undefined,
+      });
       const newUser = await apiRequest('/users', 'POST', userData);
+      // eslint-disable-next-line no-console
+      console.log('[Admin] Create user response', newUser);
       setUsers([newUser.user, ...users]); // Backend returns { message, user: newUser.rows[0] }
       setShowCreateUserModal(false);
       setError(null);
@@ -51,20 +59,32 @@ function AdminUserManagementPage() {
     }
   };
 
-  const handleEditUserClick = (userToEdit) => {
-    setEditingUser(userToEdit);
-    setShowEditUserModal(true);
-    setError(null);
+  const handleEditUserClick = async (userToEdit) => {
+    try {
+      // Fetch full user with profile to ensure prefill
+      const full = await apiRequest(`/users/${userToEdit.user_id}`, 'GET');
+      setEditingUser(full);
+      setShowEditUserModal(true);
+      setError(null);
+    } catch (e) {
+      console.error('Error fetching user for edit:', e);
+      setError(`Failed to load user for edit: ${e.message}`);
+    }
   };
 
   const handleUpdateUser = async (userData) => {
     if (!editingUser) return;
     try {
+      // Debug: log update request
+      // eslint-disable-next-line no-console
+      console.log('[Admin] Update user payload', { id: editingUser.user_id, body: userData });
       const updatedUserResponse = await apiRequest(
         `/users/${editingUser.user_id}`,
         'PUT',
         userData
       );
+      // eslint-disable-next-line no-console
+      console.log('[Admin] Update user response', updatedUserResponse);
       // Assuming backend returns { message, user: result.rows[0] }
       const updatedUser = updatedUserResponse.user;
       setUsers(
@@ -187,6 +207,7 @@ function AdminUserManagementPage() {
                       <th>ID</th>
                       <th>Email</th>
                       <th>Name</th>
+                      <th>Profile ID</th>
                       <th>Role</th>
                       <th>Created</th>
                       <th>Actions</th>
@@ -202,6 +223,15 @@ function AdminUserManagementPage() {
                             <div className="font-medium">{user.first_name} {user.last_name}</div>
                           </div>
                         </td>
+                        <td className="font-mono text-sm">
+                          {user.role === 'student' && user.profile?.matric_no ? (
+                            <span>{user.profile.matric_no}</span>
+                          ) : user.role === 'teacher' && user.profile?.lecturer_no ? (
+                            <span>{user.profile.lecturer_no}</span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
                         <td>
                           <span className={`badge ${
                             user.role === 'admin' ? 'badge-error' :
@@ -212,7 +242,12 @@ function AdminUserManagementPage() {
                           </span>
                         </td>
                         <td className="text-sm text-gray-600">
-                          {new Date(user.created_at).toLocaleDateString()}
+                          {(() => {
+                            const d = user.created_at ? new Date(user.created_at) : null;
+                            return d && !isNaN(d.getTime())
+                              ? d.toLocaleDateString()
+                              : '—';
+                          })()}
                         </td>
                         <td>
                           <div className="flex gap-2">

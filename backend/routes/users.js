@@ -14,9 +14,53 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 
   try {
-    // Fetch all users, excluding password hash for security
-    const result = await db.query('SELECT user_id, email, first_name, last_name, role, created_at FROM users ORDER BY created_at DESC');
-    res.json(result.rows);
+    // Fetch all users and join possible profiles. We'll project a normalized shape with optional profile data.
+    const result = await db.query(
+      `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+              sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+              tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
+         FROM users u
+    LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+    LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+        ORDER BY u.created_at DESC`
+    );
+
+    const users = result.rows.map((r) => {
+      const base = {
+        user_id: r.user_id,
+        email: r.email,
+        first_name: r.first_name,
+        last_name: r.last_name,
+        role: r.role,
+        created_at: r.created_at,
+      };
+      if (r.role === ROLES.STUDENT) {
+        return {
+          ...base,
+          profile: {
+            matric_no: r.student_matric_no || null,
+            department: r.student_department || null,
+            course: r.student_course || null,
+            level: r.student_level || null,
+            phone: r.student_phone || null,
+          },
+        };
+      }
+      if (r.role === ROLES.TEACHER) {
+        return {
+          ...base,
+          profile: {
+            lecturer_no: r.teacher_lecturer_no || null,
+            department: r.teacher_department || null,
+            office: r.teacher_office || null,
+            phone: r.teacher_phone || null,
+          },
+        };
+      }
+      return base;
+    });
+
+    res.json(users);
   } catch (err) {
     console.error('Error fetching users:', err);
     res.status(500).json({ error: 'Server error fetching users.' });
@@ -42,9 +86,15 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 
   try {
-    // Fetch the specific user, excluding password hash
+    // Fetch the specific user with optional role-specific profile
     const result = await db.query(
-      'SELECT user_id, email, first_name, last_name, role, created_at FROM users WHERE user_id = $1',
+      `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+              sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+              tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
+         FROM users u
+    LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+    LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+        WHERE u.user_id = $1`,
       [requestedUserId]
     );
 
@@ -52,7 +102,40 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    res.json(result.rows[0]);
+    const r = result.rows[0];
+    const base = {
+      user_id: r.user_id,
+      email: r.email,
+      first_name: r.first_name,
+      last_name: r.last_name,
+      role: r.role,
+      created_at: r.created_at,
+    };
+    let withProfile = base;
+    if (r.role === ROLES.STUDENT) {
+      withProfile = {
+        ...base,
+        profile: {
+          matric_no: r.student_matric_no || null,
+          department: r.student_department || null,
+          course: r.student_course || null,
+          level: r.student_level || null,
+          phone: r.student_phone || null,
+        },
+      };
+    } else if (r.role === ROLES.TEACHER) {
+      withProfile = {
+        ...base,
+        profile: {
+          lecturer_no: r.teacher_lecturer_no || null,
+          department: r.teacher_department || null,
+          office: r.teacher_office || null,
+          phone: r.teacher_phone || null,
+        },
+      };
+    }
+
+    res.json(withProfile);
   } catch (err) {
     console.error(`Error fetching user ${requestedUserId}:`, err);
     res.status(500).json({ error: 'Server error fetching user.' });
@@ -63,7 +146,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // PUT /api/users/:id
 router.put('/:id', authMiddleware, async (req, res) => {
   const requestedUserId = parseInt(req.params.id, 10);
-  const { firstName, lastName, role } = req.body; // Destructure role from body
+  const { firstName, lastName, role, profileStudent, profileTeacher } = req.body; // Allow optional profile updates
   const requestingUser = req.user; // Contains requesting user's id and role
 
   if (isNaN(requestedUserId)) {
@@ -153,22 +236,69 @@ router.put('/:id', authMiddleware, async (req, res) => {
   queryParams.push(requestedUserId); // For the WHERE user_id = $N clause
 
   try {
-    const queryText = `UPDATE users SET ${updatableFields.join(', ')} WHERE user_id = $${paramIndex} RETURNING user_id, email, first_name, last_name, role`;
-    
-    const result = await db.query(queryText, queryParams);
+    console.log('[API] PUT /api/users/:id body', {
+      id: requestedUserId,
+      hasFirstName: firstName !== undefined,
+      hasLastName: lastName !== undefined,
+      hasRole: role !== undefined,
+      hasStudent: Boolean(profileStudent),
+      hasTeacher: Boolean(profileTeacher),
+      actorRole: requestingUser.role,
+    });
 
-    if (result.rows.length === 0) {
-      // Should ideally be caught by the user check if role was being updated, but good as a fallback.
+    const updatedUser = await db.withTransaction(async (client) => {
+      // Update base user fields
+      const queryText = `UPDATE users SET ${updatableFields.join(', ')} WHERE user_id = $${paramIndex} RETURNING user_id, email, first_name, last_name, role`;
+      const baseResult = await client.query(queryText, queryParams);
+      if (baseResult.rows.length === 0) {
+        return { notFound: true };
+      }
+      const baseUser = baseResult.rows[0];
+
+      // Determine target role for profile updates (post-change if role changed)
+      const targetRole = baseUser.role;
+
+      // Optionally upsert profile data
+      if (targetRole === ROLES.STUDENT && profileStudent) {
+        const { matricNo, department, course, level, phone } = profileStudent;
+        // Upsert behavior: if profile exists, update; else insert
+        await client.query(
+          `INSERT INTO student_profiles (user_id, matric_no, department, course, level, phone)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (user_id) DO UPDATE SET
+             matric_no = EXCLUDED.matric_no,
+             department = EXCLUDED.department,
+             course = EXCLUDED.course,
+             level = EXCLUDED.level,
+             phone = EXCLUDED.phone`,
+          [baseUser.user_id, matricNo, department, course, level, phone || null]
+        );
+      }
+      if (targetRole === ROLES.TEACHER && profileTeacher) {
+        const { lecturerNo, department, office, phone } = profileTeacher;
+        await client.query(
+          `INSERT INTO teacher_profiles (user_id, lecturer_no, department, office, phone)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (user_id) DO UPDATE SET
+             lecturer_no = EXCLUDED.lecturer_no,
+             department = EXCLUDED.department,
+             office = EXCLUDED.office,
+             phone = EXCLUDED.phone`,
+          [baseUser.user_id, lecturerNo, department, office || null, phone || null]
+        );
+      }
+
+      return { user: baseUser };
+    });
+
+    if (updatedUser.notFound) {
       return res.status(404).json({ error: 'User not found or update failed.' });
     }
 
-    res.json({
-      message: 'User updated successfully.',
-      user: result.rows[0],
-    });
+    return res.json({ message: 'User updated successfully.', user: updatedUser.user });
   } catch (err) {
-    console.error(`Error updating user ${requestedUserId}:`, err);
-    res.status(500).json({ error: 'Server error updating user.' });
+    console.error(`[API] Error updating user ${requestedUserId}:`, err);
+    return res.status(500).json({ error: 'Server error updating user.' });
   }
 });
 
@@ -227,7 +357,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 
   // 2. Extract and Validate Input
-  const { email, password, firstName, lastName, role } = req.body;
+  const { email, password, firstName, lastName, role, profileStudent, profileTeacher } = req.body;
   if (!email || !password || !firstName || !lastName || !role) {
     return res.status(400).json({ error: 'Missing required fields (email, password, firstName, lastName, role).' });
   }
@@ -239,31 +369,120 @@ router.post('/', authMiddleware, async (req, res) => {
   // Add more validation (e.g., email format, password strength) if needed
 
   try {
-    // 3. Check if email already exists
-    const userExists = await db.query('SELECT 1 FROM users WHERE email = $1', [email]);
-    if (userExists.rows.length > 0) {
-      return res.status(409).json({ error: 'Conflict: Email address is already in use.' }); // 409 Conflict is appropriate here
-    }
+    console.log('[API] POST /api/users body', {
+      email,
+      hasPassword: Boolean(password),
+      firstName,
+      lastName,
+      role,
+      hasStudent: Boolean(profileStudent),
+      hasTeacher: Boolean(profileTeacher),
+    });
+    const result = await db.withTransaction(async (client) => {
+      // 3. Check if email already exists
+      const userExists = await client.query('SELECT 1 FROM users WHERE email = $1', [email]);
+      if (userExists.rows.length > 0) {
+        return { conflict: true };
+      }
 
-    // 4. Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+      // 4. Hash the password
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
 
-    // 5. Insert new user into the database
-    const newUser = await db.query(
-      'INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5) RETURNING user_id, email, first_name, last_name, role, created_at',
-      [email, passwordHash, firstName, lastName, role]
-    );
+      // 5. Insert new user into the database
+      const inserted = await client.query(
+        'INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5) RETURNING user_id, email, first_name, last_name, role, created_at',
+        [email, passwordHash, firstName, lastName, role]
+      );
+      const newUser = inserted.rows[0];
 
-    // 6. Send Response
-    res.status(201).json({
-      message: 'User created successfully.',
-      user: newUser.rows[0],
+      // 6. Insert role-specific profile if provided
+      if (role === ROLES.STUDENT) {
+        // Validate minimal required profile fields for student
+        if (profileStudent) {
+          const { matricNo, department, course, level, phone } = profileStudent;
+          if (!matricNo || !department || !course || !level) {
+            throw new Error('Missing required student profile fields (matricNo, department, course, level).');
+          }
+          await client.query(
+            'INSERT INTO student_profiles (user_id, matric_no, department, course, level, phone) VALUES ($1, $2, $3, $4, $5, $6)',
+            [newUser.user_id, matricNo, department, course, level, phone || null]
+          );
+        }
+      } else if (role === ROLES.TEACHER) {
+        if (profileTeacher) {
+          const { lecturerNo, department, office, phone } = profileTeacher;
+          if (!lecturerNo || !department) {
+            throw new Error('Missing required teacher profile fields (lecturerNo, department).');
+          }
+          await client.query(
+            'INSERT INTO teacher_profiles (user_id, lecturer_no, department, office, phone) VALUES ($1, $2, $3, $4, $5)',
+            [newUser.user_id, lecturerNo, department, office || null, phone || null]
+          );
+        }
+      }
+
+      // 7. Return full user with profile (if any) to the client
+      const joined = await client.query(
+        `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+                sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+                tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
+           FROM users u
+      LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+      LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+          WHERE u.user_id = $1`,
+        [newUser.user_id]
+      );
+
+      const r = joined.rows[0];
+      const base = {
+        user_id: r.user_id,
+        email: r.email,
+        first_name: r.first_name,
+        last_name: r.last_name,
+        role: r.role,
+        created_at: r.created_at,
+      };
+
+      let withProfile = base;
+      if (r.role === ROLES.STUDENT) {
+        withProfile = {
+          ...base,
+          profile: {
+            matric_no: r.student_matric_no || null,
+            department: r.student_department || null,
+            course: r.student_course || null,
+            level: r.student_level || null,
+            phone: r.student_phone || null,
+          },
+        };
+      } else if (r.role === ROLES.TEACHER) {
+        withProfile = {
+          ...base,
+          profile: {
+            lecturer_no: r.teacher_lecturer_no || null,
+            department: r.teacher_department || null,
+            office: r.teacher_office || null,
+            phone: r.teacher_phone || null,
+          },
+        };
+      }
+
+      return { user: withProfile };
     });
 
+      if (result.conflict) {
+      return res.status(409).json({ error: 'Conflict: Email address is already in use.' });
+    }
+
+    return res.status(201).json({ message: 'User created successfully.', user: result.user });
   } catch (err) {
-    console.error('Error creating user:', err);
-    res.status(500).json({ error: 'Server error during user creation.' });
+    console.error('[API] Error creating user:', err);
+    // Basic constraint handling for uniqueness
+    if (err.message && err.message.startsWith('Missing required')) {
+      return res.status(400).json({ error: err.message });
+    }
+    return res.status(500).json({ error: 'Server error during user creation.' });
   }
 });
 
