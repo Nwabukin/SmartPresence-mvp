@@ -92,11 +92,24 @@ function TeacherAttendancePage() {
     if (!session) return 'Session details not found';
     const classInfo = classes.find((c) => c.class_id === session.class_id);
     const roomInfo = rooms.find((r) => r.room_id === session.room_id);
-    return `${classInfo ? classInfo.name : 'Unknown Class'} - ${roomInfo ? roomInfo.name : 'Unknown Room'} - ${new Date(session.session_date).toLocaleDateString()} ${session.start_time}-${session.end_time}`;
+    const sessionDate = new Date(session.start_time);
+    const startTime = sessionDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const endTime = new Date(session.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${classInfo ? classInfo.name : 'Unknown Class'} - ${roomInfo ? roomInfo.name : 'Unknown Room'} - ${sessionDate.toLocaleDateString()} ${startTime}-${endTime}`;
   };
 
   if (teacherUser?.role !== 'teacher') {
-    return <div>Access Denied: Requires Teacher privileges.</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="card max-w-md">
+          <div className="card-body text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-4">You do not have the required permissions to view this page.</p>
+            <Link to="/" className="btn btn-primary">Go to Homepage</Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loading && sessions.length === 0) {

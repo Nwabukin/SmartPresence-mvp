@@ -12,6 +12,7 @@ function TeacherDashboard() {
     recentSessions: [],
     recentAttendance: [],
   });
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user: teacherUser } = useAuth();
@@ -90,6 +91,8 @@ function TeacherDashboard() {
         recentSessions,
         recentAttendance,
       });
+      
+      setClasses(classes || []);
 
       setError(null);
     } catch (err) {
@@ -107,7 +110,17 @@ function TeacherDashboard() {
   }, [teacherUser]);
 
   if (teacherUser?.role !== 'teacher') {
-    return <div>{error || 'Access Denied. Requires Teacher privileges.'}</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="card max-w-md">
+          <div className="card-body text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-4">You do not have the required permissions to view this page.</p>
+            <Link to="/" className="btn btn-primary">Go to Homepage</Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -318,26 +331,30 @@ function TeacherDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.recentSessions.map((session) => (
-                      <tr key={session.session_id}>
-                        <td className="font-mono text-sm">{session.session_id}</td>
-                        <td className="font-medium">{session.class_name || 'Unknown Class'}</td>
-                        <td className="text-sm text-gray-600">
-                          {new Date(session.start_time).toLocaleString()}
-                        </td>
-                        <td className="text-sm text-gray-600">
-                          {new Date(session.end_time).toLocaleString()}
-                        </td>
-                        <td>
-                          <Link
-                            to={`/teacher/attendance?session=${session.session_id}`}
-                            className="btn btn-primary btn-sm"
-                          >
-                            View Attendance
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {stats.recentSessions.map((session) => {
+                      // Find the class details for this session
+                      const classDetails = classes?.find(c => c.class_id === session.class_id);
+                      return (
+                        <tr key={session.session_id}>
+                          <td className="font-mono text-sm">{session.session_id}</td>
+                          <td className="font-medium">{classDetails?.name || 'Unknown Class'}</td>
+                          <td className="text-sm text-gray-600">
+                            {new Date(session.start_time).toLocaleString()}
+                          </td>
+                          <td className="text-sm text-gray-600">
+                            {new Date(session.end_time).toLocaleString()}
+                          </td>
+                          <td>
+                            <Link
+                              to={`/teacher/attendance?session=${session.session_id}`}
+                              className="btn btn-primary btn-sm"
+                            >
+                              View Attendance
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
