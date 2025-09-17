@@ -72,24 +72,32 @@ function TeacherEnrollmentPage() {
     setFoundStudent(null);
 
     try {
-      // Search for student by matric number
-      const response = await apiRequest(`/users/search?matric_no=${encodeURIComponent(matricNumber.trim())}&role=student`);
+      // Get all students and filter by matric number
+      const allStudents = await apiRequest('/users?role=student');
       
-      if (response && response.length > 0) {
-        const student = response[0];
-        
-        // Check if student is already enrolled
-        const isAlreadyEnrolled = enrolledStudents.some(
-          enrolled => enrolled.user_id === student.user_id
+      if (allStudents && allStudents.length > 0) {
+        // Find student by matric number (case-insensitive)
+        const student = allStudents.find(s => 
+          s.profile?.matric_no && 
+          s.profile.matric_no.toLowerCase() === matricNumber.trim().toLowerCase()
         );
         
-        if (isAlreadyEnrolled) {
-          setSearchError('This student is already enrolled in this class');
+        if (student) {
+          // Check if student is already enrolled
+          const isAlreadyEnrolled = enrolledStudents.some(
+            enrolled => enrolled.user_id === student.user_id
+          );
+          
+          if (isAlreadyEnrolled) {
+            setSearchError('This student is already enrolled in this class');
+          } else {
+            setFoundStudent(student);
+          }
         } else {
-          setFoundStudent(student);
+          setSearchError('No student found with this matric number');
         }
       } else {
-        setSearchError('No student found with this matric number');
+        setSearchError('No students found in the system');
       }
     } catch (err) {
       console.error('Error searching for student:', err);
