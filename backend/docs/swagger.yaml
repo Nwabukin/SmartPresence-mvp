@@ -1,0 +1,1310 @@
+openapi: 3.0.3
+info:
+  title: SmartPresence API
+  description: API for managing users, rooms, classes, sessions, and attendance in an educational institution
+  version: 1.0.0
+  contact:
+    name: SmartPresence Development Team
+    email: dev@smartpresence.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.smartpresence.com/api
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate a user and receive a JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve all users (Admin/Teacher only)
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Users
+      summary: Create user
+      description: Create a new user (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CreateStudentRequest'
+                - $ref: '#/components/schemas/CreateTeacherRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Retrieve a specific user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Users
+      summary: Update user
+      description: Update an existing user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user
+      description: Delete a user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /rooms:
+    get:
+      tags:
+        - Rooms
+      summary: Get all rooms
+      description: Retrieve all rooms (Admin only)
+      responses:
+        '200':
+          description: Rooms retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomsResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Rooms
+      summary: Create room
+      description: Create a new room (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /rooms/{id}:
+    get:
+      tags:
+        - Rooms
+      summary: Get room by ID
+      description: Retrieve a specific room by ID (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Room retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Rooms
+      summary: Update room
+      description: Update an existing room (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoomRequest'
+      responses:
+        '200':
+          description: Room updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Rooms
+      summary: Delete room
+      description: Delete a room (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Room deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /classes:
+    get:
+      tags:
+        - Classes
+      summary: Get all classes
+      description: Retrieve all classes
+      responses:
+        '200':
+          description: Classes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassesResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Classes
+      summary: Create class
+      description: Create a new class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClassRequest'
+      responses:
+        '201':
+          description: Class created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sessions:
+    get:
+      tags:
+        - Sessions
+      summary: Get all sessions
+      description: Retrieve all sessions
+      responses:
+        '200':
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionsResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Sessions
+      summary: Create session
+      description: Create a new session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sessions/{sessionId}/attendance:
+    get:
+      tags:
+        - Sessions
+      summary: Get session attendance
+      description: Get attendance records for a specific session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Attendance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /students/attendance/mark:
+    post:
+      tags:
+        - Attendance
+      summary: Mark attendance
+      description: Mark attendance for a student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkAttendanceRequest'
+      responses:
+        '201':
+          description: Attendance marked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceRecordResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /attendance/{recordId}:
+    put:
+      tags:
+        - Attendance
+      summary: Update attendance
+      description: Update attendance record (Admin/Teacher only)
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAttendanceRequest'
+      responses:
+        '200':
+          description: Attendance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceRecordResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Attendance record not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Base Response Schemas
+    BaseResponse:
+      type: object
+      required:
+        - success
+        - message
+        - timestamp
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    SuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+        - timestamp
+        - path
+        - method
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required:
+            - message
+            - type
+            - statusCode
+          properties:
+            message:
+              type: string
+            type:
+              type: string
+            statusCode:
+              type: integer
+            details:
+              type: array
+              items:
+                type: object
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        method:
+          type: string
+        requestId:
+          type: string
+
+    # User Schemas
+    User:
+      type: object
+      required:
+        - user_id
+        - email
+        - first_name
+        - last_name
+        - role
+        - created_at
+      properties:
+        user_id:
+          type: integer
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, teacher, student]
+        created_at:
+          type: string
+          format: date-time
+        profile:
+          oneOf:
+            - $ref: '#/components/schemas/StudentProfile'
+            - $ref: '#/components/schemas/TeacherProfile'
+            - type: null
+
+    StudentProfile:
+      type: object
+      properties:
+        matric_no:
+          type: string
+        department:
+          type: string
+        course:
+          type: string
+        level:
+          type: string
+        phone:
+          type: string
+          nullable: true
+
+    TeacherProfile:
+      type: object
+      properties:
+        lecturer_no:
+          type: string
+        department:
+          type: string
+        office:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+
+    UserResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/User'
+
+    UsersResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+
+    CreateStudentRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+        - role
+        - profileStudent
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        role:
+          type: string
+          enum: [student]
+        profileStudent:
+          type: object
+          required:
+            - matricNo
+            - department
+            - course
+            - level
+          properties:
+            matricNo:
+              type: string
+              minLength: 1
+              maxLength: 100
+            department:
+              type: string
+              minLength: 1
+              maxLength: 150
+            course:
+              type: string
+              minLength: 1
+              maxLength: 150
+            level:
+              type: string
+              minLength: 1
+              maxLength: 50
+            phone:
+              type: string
+              maxLength: 50
+
+    CreateTeacherRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+        - role
+        - profileTeacher
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        role:
+          type: string
+          enum: [teacher]
+        profileTeacher:
+          type: object
+          required:
+            - lecturerNo
+            - department
+          properties:
+            lecturerNo:
+              type: string
+              minLength: 1
+              maxLength: 100
+            department:
+              type: string
+              minLength: 1
+              maxLength: 150
+            office:
+              type: string
+              maxLength: 150
+            phone:
+              type: string
+              maxLength: 50
+
+    UpdateUserRequest:
+      type: object
+      minProperties: 1
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        profileStudent:
+          type: object
+          required:
+            - department
+            - course
+            - level
+          properties:
+            department:
+              type: string
+              minLength: 1
+              maxLength: 150
+            course:
+              type: string
+              minLength: 1
+              maxLength: 150
+            level:
+              type: string
+              minLength: 1
+              maxLength: 50
+            phone:
+              type: string
+              maxLength: 50
+        profileTeacher:
+          type: object
+          required:
+            - department
+          properties:
+            department:
+              type: string
+              minLength: 1
+              maxLength: 150
+            office:
+              type: string
+              maxLength: 150
+            phone:
+              type: string
+              maxLength: 50
+
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              required:
+                - token
+                - user
+              properties:
+                token:
+                  type: string
+                user:
+                  type: object
+                  required:
+                    - id
+                    - email
+                    - role
+                  properties:
+                    id:
+                      type: integer
+                    email:
+                      type: string
+                      format: email
+                    role:
+                      type: string
+                      enum: [admin, teacher, student]
+
+    # Room Schemas
+    Room:
+      type: object
+      required:
+        - room_id
+        - name
+        - wifi_ssid
+        - created_at
+      properties:
+        room_id:
+          type: integer
+        name:
+          type: string
+        wifi_ssid:
+          type: string
+        bluetooth_beacon_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    RoomResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Room'
+
+    RoomsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Room'
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - name
+        - wifi_ssid
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        wifi_ssid:
+          type: string
+          minLength: 1
+          maxLength: 100
+        bluetooth_beacon_id:
+          type: string
+          maxLength: 100
+
+    UpdateRoomRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        wifi_ssid:
+          type: string
+          minLength: 1
+          maxLength: 100
+        bluetooth_beacon_id:
+          type: string
+          maxLength: 100
+
+    # Class Schemas
+    Class:
+      type: object
+      required:
+        - class_id
+        - name
+        - course_code
+        - teacher_id
+        - created_at
+      properties:
+        class_id:
+          type: integer
+        name:
+          type: string
+        course_code:
+          type: string
+        description:
+          type: string
+          nullable: true
+        teacher_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ClassResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Class'
+
+    ClassesResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Class'
+
+    CreateClassRequest:
+      type: object
+      required:
+        - name
+        - course_code
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        course_code:
+          type: string
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
+
+    # Session Schemas
+    Session:
+      type: object
+      required:
+        - session_id
+        - class_id
+        - room_id
+        - start_time
+        - end_time
+        - created_at
+      properties:
+        session_id:
+          type: integer
+        class_id:
+          type: integer
+        room_id:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    SessionResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Session'
+
+    SessionsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Session'
+
+    CreateSessionRequest:
+      type: object
+      required:
+        - class_id
+        - room_id
+        - start_time
+        - end_time
+      properties:
+        class_id:
+          type: integer
+          minimum: 1
+        room_id:
+          type: integer
+          minimum: 1
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+
+    # Attendance Schemas
+    AttendanceRecord:
+      type: object
+      required:
+        - attendance_id
+        - student_id
+        - session_id
+        - status
+        - marked_at
+      properties:
+        attendance_id:
+          type: integer
+        student_id:
+          type: integer
+        session_id:
+          type: integer
+        status:
+          type: string
+          enum: [present, absent, late, excused]
+        marked_at:
+          type: string
+          format: date-time
+
+    AttendanceRecordResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AttendanceRecord'
+
+    AttendanceResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttendanceRecord'
+
+    MarkAttendanceRequest:
+      type: object
+      required:
+        - class_id
+        - session_id
+        - wifi_ssid
+      properties:
+        class_id:
+          type: integer
+          minimum: 1
+        session_id:
+          type: integer
+          minimum: 1
+        wifi_ssid:
+          type: string
+          minLength: 1
+          maxLength: 100
+        bluetooth_beacon_id:
+          type: string
+          maxLength: 100
+
+    UpdateAttendanceRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [present, absent, late, excused]
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Rooms
+    description: Room management endpoints
+  - name: Classes
+    description: Class management endpoints
+  - name: Sessions
+    description: Session management endpoints
+  - name: Attendance
+    description: Attendance management endpoints
