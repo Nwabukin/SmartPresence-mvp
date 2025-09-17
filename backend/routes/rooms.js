@@ -29,7 +29,8 @@ router.post('/', [authMiddleware, adminMiddleware], validate(schemas.room.create
 
 // Get all rooms
 // GET /api/rooms
-router.get('/', [authMiddleware, adminMiddleware], async (req, res) => {
+// Allow both admins and teachers to read rooms (teachers need this for session scheduling)
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const allRooms = await db.query('SELECT * FROM rooms ORDER BY name ASC');
     res.json(allRooms.rows);
@@ -41,7 +42,8 @@ router.get('/', [authMiddleware, adminMiddleware], async (req, res) => {
 
 // Get a single room by ID
 // GET /api/rooms/:id
-router.get('/:id', [authMiddleware, adminMiddleware], validate(schemas.room.getById, 'params'), async (req, res) => {
+// Allow both admins and teachers to read individual rooms
+router.get('/:id', authMiddleware, validate(schemas.room.getById, 'params'), async (req, res) => {
   try {
     const { id } = req.params;
     const room = await db.query('SELECT * FROM rooms WHERE room_id = $1', [id]);
