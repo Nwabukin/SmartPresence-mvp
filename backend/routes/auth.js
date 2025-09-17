@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db'); // Adjust path to db connection
+const { validate, schemas } = require('../utils/validation'); // Input validation
 
 const router = express.Router();
 
@@ -19,12 +20,8 @@ if (!JWT_SECRET) {
 
 // --- Login --- 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', validate(schemas.auth.login), async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required.' });
-  }
 
   try {
     // Find user by email

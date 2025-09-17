@@ -3,23 +3,20 @@ const router = express.Router();
 const db = require('../db'); // Database connection
 const authMiddleware = require('../middleware/auth'); // Authentication middleware
 const ROLES = require('../utils/roles'); // Roles
+const { validate, schemas } = require('../utils/validation'); // Input validation
 
 // Placeholder for Class model structure (fields we expect for a class)
 // Example: { class_name: "Introduction to Programming", course_code: "CS101", teacher_id: 1 }
 
 // --- Create a new Class (Teacher Only) ---
 // POST /api/classes
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, validate(schemas.class.create), async (req, res) => {
   if (req.user.role !== ROLES.TEACHER) {
     return res.status(403).json({ error: 'Forbidden: Only teachers can create classes.' });
   }
 
   const { name, course_code, description } = req.body;
   const teacher_id = req.user.id; // The logged-in teacher becomes the teacher_id
-
-  if (!name || !course_code) {
-    return res.status(400).json({ error: 'Missing required fields (name, course_code).' });
-  }
 
   try {
     const result = await db.query(
@@ -60,7 +57,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // --- Get a specific Class by ID (Teacher/Admin) ---
 // GET /api/classes/:id
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', authMiddleware, validate(schemas.class.getById, 'params'), async (req, res) => {
   if (![ROLES.ADMIN, ROLES.TEACHER].includes(req.user.role)) {
     return res.status(403).json({ error: 'Forbidden: Insufficient privileges.' });
   }
@@ -89,7 +86,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
 // --- Update a Class by ID (Owner Teacher Only) ---
 // PUT /api/classes/:id
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, validate(schemas.class.getById, 'params'), validate(schemas.class.update), async (req, res) => {
   const { id } = req.params;
   const classId = parseInt(id, 10);
   const { name, course_code, description } = req.body;
@@ -164,7 +161,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
 // --- Delete a Class by ID (Owner Teacher Only) ---
 // DELETE /api/classes/:id
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, validate(schemas.class.getById, 'params'), async (req, res) => {
   const { id } = req.params;
   const classId = parseInt(id, 10);
   const requestingUserId = req.user.id;

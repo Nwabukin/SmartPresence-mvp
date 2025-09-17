@@ -3,31 +3,18 @@ const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const ROLES = require('../utils/roles');
+const { validate, schemas } = require('../utils/validation'); // Input validation
 
 const VALID_ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'];
 
 // --- Manually Update an Attendance Record (Teacher who owns class only) ---
 // PUT /api/attendance/:recordId
-router.put('/:recordId', authMiddleware, async (req, res) => {
+router.put('/:recordId', authMiddleware, validate(schemas.attendance.getByRecordId, 'params'), validate(schemas.attendance.update), async (req, res) => {
   const { recordId } = req.params;
   const recordIdInt = parseInt(recordId, 10);
   const { status } = req.body;
   const requestingUserId = req.user.id;
   const requestingUserRole = req.user.role;
-
-  if (isNaN(recordIdInt)) {
-    return res.status(400).json({ error: 'Invalid attendance record ID format.' });
-  }
-
-  if (!status) {
-    return res.status(400).json({ error: 'Missing required field: status.' });
-  }
-
-  if (!VALID_ATTENDANCE_STATUSES.includes(status)) {
-    return res.status(400).json({ 
-      error: `Invalid status. Must be one of: ${VALID_ATTENDANCE_STATUSES.join(', ')}` 
-    });
-  }
 
   try {
     // 1. Fetch the attendance record to get session_id

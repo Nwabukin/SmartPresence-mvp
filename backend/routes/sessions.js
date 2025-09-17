@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const ROLES = require('../utils/roles');
+const { validate, schemas } = require('../utils/validation'); // Input validation
 
 // Helper function to check if user can manage a session (teacher owns the class)
 async function canManageSession(userId, userRole, classId) {
@@ -19,47 +20,26 @@ async function canManageSession(userId, userRole, classId) {
 
 // --- Create a new Session (Teacher Only) ---
 // POST /api/sessions
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, validate(schemas.session.create), async (req, res) => {
   const { class_id, room_id, start_time, end_time } = req.body;
   const requestingUserId = req.user.id;
   const requestingUserRole = req.user.role;
 
-  if (!class_id || !room_id || !start_time || !end_time) {
-    return res.status(400).json({ error: 'Missing required fields (class_id, room_id, start_time, end_time).' });
-  }
-
-  const classIdInt = parseInt(class_id, 10);
-  const roomIdInt = parseInt(room_id, 10);
-
-  if (isNaN(classIdInt) || isNaN(roomIdInt)) {
-    return res.status(400).json({ error: 'Invalid class_id or room_id format.'});
-  }
-
-  // Validate start_time and end_time format and logic (end_time > start_time)
-  const startTimeDate = new Date(start_time);
-  const endTimeDate = new Date(end_time);
-  if (isNaN(startTimeDate.getTime()) || isNaN(endTimeDate.getTime())) {
-    return res.status(400).json({ error: 'Invalid date format for start_time or end_time.' });
-  }
-  if (endTimeDate <= startTimeDate) {
-    return res.status(400).json({ error: 'End time must be after start time.' });
-  }
-
   try {
-    const canCreate = await canManageSession(requestingUserId, requestingUserRole, classIdInt);
+    const canCreate = await canManageSession(requestingUserId, requestingUserRole, class_id);
     if (!canCreate) {
       return res.status(403).json({ error: 'Forbidden: Only teachers can create sessions for their own classes.' });
     }
     
     // Verify room exists
-    const roomExists = await db.query('SELECT 1 FROM rooms WHERE room_id = $1', [roomIdInt]);
+    const roomExists = await db.query('SELECT 1 FROM rooms WHERE room_id = $1', [room_id]);
     if (roomExists.rows.length === 0) {
         return res.status(404).json({ error: 'Room not found.'});
     }
 
     const result = await db.query(
       'INSERT INTO sessions (class_id, room_id, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING *',
-      [classIdInt, roomIdInt, startTimeDate, endTimeDate]
+      [class_id, room_id, start_time, end_time]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -118,7 +98,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // --- Get a specific Session by ID (Admin can view all, Teacher who owns class) ---
 // GET /api/sessions/:sessionId
-router.get('/:sessionId', authMiddleware, async (req, res) => {
+router.get('/:sessionId', authMiddleware, validate(schemas.session.getById, 'params'), async (req, res) => {
   const { sessionId } = req.params;
   const sessionIdInt = parseInt(sessionId, 10);
   const requestingUserId = req.user.id;
@@ -159,7 +139,7 @@ router.get('/:sessionId', authMiddleware, async (req, res) => {
 
 // --- Update a Session by ID (Teacher who owns class only) ---
 // PUT /api/sessions/:sessionId
-router.put('/:sessionId', authMiddleware, async (req, res) => {
+router.put('/:sessionId', authMiddleware, validate(schemas.session.getById, 'params'), validate(schemas.session.update), async (req, res) => {
   const { sessionId } = req.params;
   const sessionIdInt = parseInt(sessionId, 10);
   const { room_id, start_time, end_time } = req.body;
@@ -247,7 +227,7 @@ router.put('/:sessionId', authMiddleware, async (req, res) => {
 
 // --- Delete a Session by ID (Teacher who owns class only) ---
 // DELETE /api/sessions/:sessionId
-router.delete('/:sessionId', authMiddleware, async (req, res) => {
+router.delete('/:sessionId', authMiddleware, validate(schemas.session.getById, 'params'), async (req, res) => {
   const { sessionId } = req.params;
   const sessionIdInt = parseInt(sessionId, 10);
   const requestingUserId = req.user.id;
@@ -280,7 +260,7 @@ router.delete('/:sessionId', authMiddleware, async (req, res) => {
 
 // --- Get Attendance Records for a Session (Admin can view all, Teacher who owns class) ---
 // GET /api/sessions/:sessionId/attendance
-router.get('/:sessionId/attendance', authMiddleware, async (req, res) => {
+router.get('/:sessionId/attendance', authMiddleware, validate(schemas.session.getAttendance, 'params'), async (req, res) => {
   const { sessionId } = req.params;
   const sessionIdInt = parseInt(sessionId, 10);
   const requestingUserId = req.user.id;

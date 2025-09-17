@@ -4,6 +4,7 @@ const router = express.Router();
 // Middleware
 const authMiddleware = require('../middleware/auth'); // Corrected path
 const adminMiddleware = require('../middleware/adminMiddleware');
+const { validate, schemas } = require('../utils/validation'); // Input validation
 
 // Database connection (pool or query function)
 const db = require('../db'); // Assuming db/index.js or db.js exports query or pool
@@ -11,14 +12,8 @@ const db = require('../db'); // Assuming db/index.js or db.js exports query or p
 // Create a new room
 // POST /api/rooms
 // Protected by authMiddleware (user must be logged in) and adminMiddleware (user must be an admin)
-router.post('/', [authMiddleware, adminMiddleware], async (req, res) => {
-  // TODO: Add validation for request body (name, wifi_ssid, bluetooth_beacon_id)
+router.post('/', [authMiddleware, adminMiddleware], validate(schemas.room.create), async (req, res) => {
   const { name, wifi_ssid, bluetooth_beacon_id } = req.body;
-
-  // Basic validation example (you should use a library like Joi or express-validator)
-  if (!name || !wifi_ssid) { // bluetooth_beacon_id can be optional depending on requirements
-    return res.status(400).json({ msg: 'Please provide name and Wi-Fi SSID for the room.' });
-  }
 
   try {
     const newRoom = await db.query(
@@ -46,7 +41,7 @@ router.get('/', [authMiddleware, adminMiddleware], async (req, res) => {
 
 // Get a single room by ID
 // GET /api/rooms/:id
-router.get('/:id', [authMiddleware, adminMiddleware], async (req, res) => {
+router.get('/:id', [authMiddleware, adminMiddleware], validate(schemas.room.getById, 'params'), async (req, res) => {
   try {
     const { id } = req.params;
     const room = await db.query('SELECT * FROM rooms WHERE room_id = $1', [id]);
@@ -67,14 +62,9 @@ router.get('/:id', [authMiddleware, adminMiddleware], async (req, res) => {
 
 // Update a room by ID
 // PUT /api/rooms/:id
-router.put('/:id', [authMiddleware, adminMiddleware], async (req, res) => {
+router.put('/:id', [authMiddleware, adminMiddleware], validate(schemas.room.getById, 'params'), validate(schemas.room.update), async (req, res) => {
   const { id } = req.params;
   const { name, wifi_ssid, bluetooth_beacon_id } = req.body;
-
-  // Basic validation
-  if (!name || !wifi_ssid) { // Again, consider if bluetooth_beacon_id is mandatory
-    return res.status(400).json({ msg: 'Name and Wi-Fi SSID are required.' });
-  }
 
   try {
     const updatedRoom = await db.query(
@@ -98,7 +88,7 @@ router.put('/:id', [authMiddleware, adminMiddleware], async (req, res) => {
 
 // Delete a room by ID
 // DELETE /api/rooms/:id
-router.delete('/:id', [authMiddleware, adminMiddleware], async (req, res) => {
+router.delete('/:id', [authMiddleware, adminMiddleware], validate(schemas.room.getById, 'params'), async (req, res) => {
   try {
     const { id } = req.params;
     const deleteOp = await db.query('DELETE FROM rooms WHERE room_id = $1 RETURNING *', [id]);

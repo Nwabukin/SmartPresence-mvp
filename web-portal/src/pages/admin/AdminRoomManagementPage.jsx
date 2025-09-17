@@ -13,7 +13,7 @@ function AdminRoomManagementPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
 
-  // TODO: Add logic for Create/Edit/Delete modals/forms
+  // CRUD operations are fully implemented below
 
   useEffect(() => {
     const fetchRooms = async () => {

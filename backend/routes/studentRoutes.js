@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db'); // Database connection
 const authMiddleware = require('../middleware/auth'); // Authentication middleware
 const ROLES = require('../utils/roles'); // Roles
+const { validate, schemas } = require('../utils/validation'); // Input validation
 
 // --- Get Enrolled Classes for the Authenticated Student ---
 // GET /api/students/classes
@@ -33,7 +34,7 @@ router.get('/classes', authMiddleware, async (req, res) => {
 
 // --- Mark Attendance for a Session ---
 // POST /api/students/attendance/mark
-router.post('/attendance/mark', authMiddleware, async (req, res) => {
+router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark), async (req, res) => {
   // Ensure the user is a student
   if (req.user.role !== ROLES.STUDENT) {
     return res.status(403).json({ error: 'Forbidden: This route is for students only.' });
@@ -41,11 +42,6 @@ router.post('/attendance/mark', authMiddleware, async (req, res) => {
 
   const studentId = req.user.id;
   const { class_id, session_id, wifi_ssid, bluetooth_beacon_id } = req.body;
-
-  // Basic input validation
-  if (!class_id || !session_id || !wifi_ssid) {
-    return res.status(400).json({ error: 'Missing required fields: class_id, session_id, and wifi_ssid are required.' });
-  }
 
   try {
     // 1. Verify student is enrolled in the class.
