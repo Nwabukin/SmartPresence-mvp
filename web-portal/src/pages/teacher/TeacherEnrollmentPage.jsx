@@ -8,9 +8,14 @@ function TeacherEnrollmentPage() {
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState('');
   const [enrolledStudents, setEnrolledStudents] = useState([]);
-  const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Student search functionality
+  const [searchMatric, setSearchMatric] = useState('');
+  const [searchingStudent, setSearchingStudent] = useState(false);
+  const [foundStudent, setFoundStudent] = useState(null);
+  const [searchError, setSearchError] = useState(null);
 
   // Fetch teacher's classes to populate a selector
   useEffect(() => {
@@ -55,24 +60,44 @@ function TeacherEnrollmentPage() {
     fetchEnrolledStudents();
   }, [selectedClass]);
 
-  // Fetch all students for enrollment
-  useEffect(() => {
-    const fetchAllStudentsForEnrollment = async () => {
-      if (teacherUser?.role === 'teacher' && selectedClass) {
-        setLoading(true);
-        try {
-          const allStudentUsers = await apiRequest('/users?role=student');
-          setAllStudents(allStudentUsers || []);
-        } catch (err) {
-          console.error('Error fetching all students:', err);
-          setAllStudents([]);
-        } finally {
-          setLoading(false);
+  // Search for student by matric number
+  const searchStudentByMatric = async (matricNumber) => {
+    if (!matricNumber.trim()) {
+      setSearchError('Please enter a matric number');
+      return;
+    }
+
+    setSearchingStudent(true);
+    setSearchError(null);
+    setFoundStudent(null);
+
+    try {
+      // Search for student by matric number
+      const response = await apiRequest(`/users/search?matric_no=${encodeURIComponent(matricNumber.trim())}&role=student`);
+      
+      if (response && response.length > 0) {
+        const student = response[0];
+        
+        // Check if student is already enrolled
+        const isAlreadyEnrolled = enrolledStudents.some(
+          enrolled => enrolled.user_id === student.user_id
+        );
+        
+        if (isAlreadyEnrolled) {
+          setSearchError('This student is already enrolled in this class');
+        } else {
+          setFoundStudent(student);
         }
+      } else {
+        setSearchError('No student found with this matric number');
       }
-    };
-    fetchAllStudentsForEnrollment();
-  }, [teacherUser, selectedClass]);
+    } catch (err) {
+      console.error('Error searching for student:', err);
+      setSearchError('Failed to search for student: ' + err.message);
+    } finally {
+      setSearchingStudent(false);
+    }
+  };
 
   const handleEnrollStudent = async (studentId) => {
     if (!selectedClass || !studentId) {
@@ -81,15 +106,20 @@ function TeacherEnrollmentPage() {
     }
     setLoading(true);
     try {
-      // API endpoint: POST /classes/:classId/students
       await apiRequest(`/classes/${selectedClass}/students`, 'POST', {
         student_id: studentId,
       });
+      
       // Re-fetch enrolled students for the selected class
       const updatedEnrolledStudents = await apiRequest(
         `/classes/${selectedClass}/students`
       );
       setEnrolledStudents(updatedEnrolledStudents || []);
+      
+      // Clear search results
+      setFoundStudent(null);
+      setSearchMatric('');
+      setSearchError(null);
       setError(null);
     } catch (err) {
       setError('Failed to enroll student: ' + err.message);
@@ -168,12 +198,6 @@ function TeacherEnrollmentPage() {
   }
 
   const selectedClassData = classes.find((c) => c.class_id === parseInt(selectedClass));
-  const availableStudents = allStudents.filter(
-    (student) =>
-      !enrolledStudents.some(
-        (enrolled) => enrolled.user_id === student.user_id
-      )
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -323,54 +347,113 @@ function TeacherEnrollmentPage() {
             <div className="card">
               <div className="card-header">
                 <h2 className="text-xl font-semibold text-gray-900">Enroll New Student</h2>
-                <p className="text-gray-600">Add students to "{selectedClassData.name}"</p>
+                <p className="text-gray-600">Search for students by matric number to add to "{selectedClassData.name}"</p>
               </div>
               <div className="card-body">
-                {loading && (
-                  <div className="text-center py-4">
-                    <div className="loading mb-2"></div>
-                    <p className="text-gray-600">Loading available students...</p>
+                {/* Search Form */}
+                <div className="max-w-md mb-6">
+                  <label htmlFor="matric-search" className="block text-sm font-medium text-gray-700 mb-2">
+                    Matric Number
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      id="matric-search"
+                      value={searchMatric}
+                      onChange={(e) => setSearchMatric(e.target.value)}
+                      placeholder="Enter matric number (e.g., 2021/123456)"
+                      className="input input-bordered flex-1"
+                      disabled={loading || searchingStudent}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          searchStudentByMatric(searchMatric);
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => searchStudentByMatric(searchMatric)}
+                      disabled={loading || searchingStudent || !searchMatric.trim()}
+                      className="btn btn-primary"
+                    >
+                      {searchingStudent ? (
+                        <div className="loading loading-sm"></div>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      )}
+                      Search
+                    </button>
+                  </div>
+                  {searchError && (
+                    <div className="alert alert-error mt-2">
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {searchError}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Found Student Display */}
+                {foundStudent && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-3">Student Found</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <p className="text-gray-900">{foundStudent.first_name} {foundStudent.last_name}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Matric Number</label>
+                        <p className="text-gray-900">{foundStudent.profile?.matric_no || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <p className="text-gray-900">{foundStudent.email}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Department</label>
+                        <p className="text-gray-900">{foundStudent.profile?.department || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => handleEnrollStudent(foundStudent.user_id)}
+                        disabled={loading}
+                        className="btn btn-success"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Enroll Student
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFoundStudent(null);
+                          setSearchMatric('');
+                          setSearchError(null);
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {!loading && availableStudents.length > 0 ? (
-                  <div className="max-w-md">
-                    <label htmlFor="student-select" className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Student to Enroll
-                    </label>
-                    <select
-                      id="student-select"
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          handleEnrollStudent(e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                      disabled={loading}
-                      className="select select-bordered w-full"
-                    >
-                      <option value="">-- Select a Student --</option>
-                      {availableStudents.map((student) => (
-                        <option key={student.user_id} value={student.user_id}>
-                          {student.first_name} {student.last_name} ({student.email})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-sm text-gray-500 mt-2">
-                      {availableStudents.length} student(s) available for enrollment
-                    </p>
-                  </div>
-                ) : !loading && (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">All Students Enrolled</h3>
-                    <p className="text-gray-600">All available students are already enrolled in this class.</p>
-                  </div>
-                )}
+                {/* Instructions */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">How to enroll students:</h4>
+                  <ol className="list-decimal list-inside text-sm text-gray-600 space-y-1">
+                    <li>Enter the student's matric number in the search field above</li>
+                    <li>Click "Search" to find the student</li>
+                    <li>Review the student information displayed</li>
+                    <li>Click "Enroll Student" to add them to the class</li>
+                  </ol>
+                </div>
               </div>
             </div>
           </>
