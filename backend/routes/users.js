@@ -24,15 +24,33 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
   }
 
   // Fetch all users and join possible profiles. We'll project a normalized shape with optional profile data.
-  const result = await db.query(
-    `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
-            sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
-            tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
-       FROM users u
-  LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
-  LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
-      ORDER BY u.created_at DESC`
-  );
+  let result;
+  try {
+    result = await db.query(
+      `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+              sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+              tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
+         FROM users u
+    LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+    LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+        ORDER BY u.created_at DESC`
+    );
+  } catch (err) {
+    // Fallback if faculty column does not exist yet
+    if (err.code === '42703') {
+      result = await db.query(
+        `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+                sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+                tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, NULL::varchar AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
+           FROM users u
+      LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+      LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+          ORDER BY u.created_at DESC`
+      );
+    } else {
+      throw err;
+    }
+  }
 
   const users = result.rows.map((r) => {
     const base = {
@@ -89,16 +107,34 @@ router.get('/:id', authMiddleware, validate(schemas.user.getById, 'params'), asy
 
   try {
     // Fetch the specific user with optional role-specific profile
-    const result = await db.query(
-      `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
-              sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
-              tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
-         FROM users u
-    LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
-    LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
-        WHERE u.user_id = $1`,
-      [requestedUserId]
-    );
+    let result;
+    try {
+      result = await db.query(
+        `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+                sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+                tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
+           FROM users u
+      LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+      LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+          WHERE u.user_id = $1`,
+        [requestedUserId]
+      );
+    } catch (err) {
+      if (err.code === '42703') {
+        result = await db.query(
+          `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+                  sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+                  tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, NULL::varchar AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
+             FROM users u
+        LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+        LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+            WHERE u.user_id = $1`,
+          [requestedUserId]
+        );
+      } else {
+        throw err;
+      }
+    }
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found.' });
@@ -279,17 +315,34 @@ router.put('/:id', authMiddleware, validate(schemas.user.getById, 'params'), val
       }
       if (targetRole === ROLES.TEACHER && profileTeacher) {
         const { lecturerNo, department, faculty, office, phone } = profileTeacher;
-        await client.query(
-          `INSERT INTO teacher_profiles (user_id, lecturer_no, department, faculty, office, phone)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           ON CONFLICT (user_id) DO UPDATE SET
-             lecturer_no = EXCLUDED.lecturer_no,
-             department = EXCLUDED.department,
-             faculty = EXCLUDED.faculty,
-             office = EXCLUDED.office,
-             phone = EXCLUDED.phone`,
-          [baseUser.user_id, lecturerNo, department, faculty || null, office || null, phone || null]
-        );
+        try {
+          await client.query(
+            `INSERT INTO teacher_profiles (user_id, lecturer_no, department, faculty, office, phone)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (user_id) DO UPDATE SET
+               lecturer_no = EXCLUDED.lecturer_no,
+               department = EXCLUDED.department,
+               faculty = EXCLUDED.faculty,
+               office = EXCLUDED.office,
+               phone = EXCLUDED.phone`,
+            [baseUser.user_id, lecturerNo, department, faculty || null, office || null, phone || null]
+          );
+        } catch (err) {
+          if (err.code === '42703') {
+            await client.query(
+              `INSERT INTO teacher_profiles (user_id, lecturer_no, department, office, phone)
+               VALUES ($1, $2, $3, $4, $5)
+               ON CONFLICT (user_id) DO UPDATE SET
+                 lecturer_no = EXCLUDED.lecturer_no,
+                 department = EXCLUDED.department,
+                 office = EXCLUDED.office,
+                 phone = EXCLUDED.phone`,
+              [baseUser.user_id, lecturerNo, department, office || null, phone || null]
+            );
+          } else {
+            throw err;
+          }
+        }
       }
 
       return { user: baseUser };
@@ -416,13 +469,24 @@ router.post('/', authMiddleware, validate(schemas.user.create), async (req, res)
       } else if (role === ROLES.TEACHER) {
         if (profileTeacher) {
           const { lecturerNo, department, faculty, office, phone } = profileTeacher;
-          if (!lecturerNo || !department || !faculty) {
-            throw new Error('Missing required teacher profile fields (lecturerNo, department, faculty).');
+          try {
+            if (!lecturerNo || !department) {
+              throw new Error('Missing required teacher profile fields (lecturerNo, department).');
+            }
+            await client.query(
+              'INSERT INTO teacher_profiles (user_id, lecturer_no, department, faculty, office, phone) VALUES ($1, $2, $3, $4, $5, $6)',
+              [newUser.user_id, lecturerNo, department, faculty || null, office || null, phone || null]
+            );
+          } catch (err) {
+            if (err.code === '42703') {
+              await client.query(
+                'INSERT INTO teacher_profiles (user_id, lecturer_no, department, office, phone) VALUES ($1, $2, $3, $4, $5)',
+                [newUser.user_id, lecturerNo, department, office || null, phone || null]
+              );
+            } else {
+              throw err;
+            }
           }
-          await client.query(
-            'INSERT INTO teacher_profiles (user_id, lecturer_no, department, faculty, office, phone) VALUES ($1, $2, $3, $4, $5, $6)',
-            [newUser.user_id, lecturerNo, department, faculty, office || null, phone || null]
-          );
         }
       }
 
