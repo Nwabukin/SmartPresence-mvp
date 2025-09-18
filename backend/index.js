@@ -41,7 +41,7 @@ const roomRoutes = require('./routes/rooms'); // Import room routes
 const classRoutes = require('./routes/classes'); // Import class routes
 const sessionRoutes = require('./routes/sessions'); // Import session routes
 const attendanceRoutes = require('./routes/attendance'); // Import attendance routes
-const studentRoutes = require('./routes/studentRoutes'); // Import student routes
+const mobileRoutes = require('./routes/mobile'); // Mobile routes
 
 // Define routes
 app.get('/', (req, res) => {
@@ -66,8 +66,8 @@ app.use('/api/sessions', sessionRoutes);
 // Mount attendance routes
 app.use('/api/attendance', attendanceRoutes);
 
-// Mount student routes
-app.use('/api/students', studentRoutes);
+// Mount mobile routes
+app.use('/api/mobile', mobileRoutes);
 
 // Simple route to test DB connection
 app.get('/test-db', async (req, res) => {
