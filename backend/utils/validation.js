@@ -169,6 +169,10 @@ const authSchemas = {
     email: commonPatterns.email,
     password: commonPatterns.password,
   }),
+  studentLogin: Joi.object({
+    matricNo: Joi.string().min(1).max(100).trim().required(),
+    password: commonPatterns.password,
+  }),
 };
 
 // Validation middleware factory

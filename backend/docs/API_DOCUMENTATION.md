@@ -51,6 +51,76 @@ Authenticate a user and receive a JWT token.
 - `401`: Invalid credentials
 
 ## User Management
+## Mobile (Students)
+
+Students authenticate via matric number on the mobile app. Web login is blocked for student role.
+
+### Student Login (Mobile)
+**POST** `/mobile/students/login`
+
+Request Body:
+```json
+{
+  "matricNo": "STU001",
+  "password": "password123"
+}
+```
+
+Response (200):
+```json
+{
+  "token": "<jwt>",
+  "user": { "id": 12, "email": "student@example.com", "role": "student", "firstName": "John", "lastName": "Doe" }
+}
+```
+
+### Get My Profile (Mobile)
+**GET** `/mobile/me`
+
+Response (200):
+```json
+{
+  "user_id": 12,
+  "email": "student@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "profile": { "matric_no": "STU001", "department": "CS", "course": "BSc CS", "level": "300", "phone": "+123" }
+}
+```
+
+### Get My Classes (Mobile)
+**GET** `/mobile/me/classes`
+
+Returns array of classes the student is enrolled in.
+
+### Get My Sessions (Mobile)
+**GET** `/mobile/me/sessions?from=&to=`
+
+Returns sessions for enrolled classes, optionally filtered by time.
+
+### Get My Attendance (Mobile)
+**GET** `/mobile/me/attendance`
+
+Returns attendance history.
+
+### Mark Attendance (Mobile)
+**POST** `/mobile/attendance/mark`
+
+Request Body:
+```json
+{
+  "class_id": 10,
+  "session_id": 55,
+  "wifi_ssid": "SmartPresence_Lab1",
+  "bluetooth_beacon_id": "BEACON_002"
+}
+```
+
+Responses:
+- 201: attendance record
+- 403: not enrolled / outside session window / location mismatch
+- 409: already marked (idempotent upsert returns updated)
+
 
 ### Get All Users
 **GET** `/users`

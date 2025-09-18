@@ -21,6 +21,104 @@ security:
 
 paths:
   /auth/login:
+  /mobile/students/login:
+    post:
+      tags:
+        - Mobile
+      summary: Student mobile login
+      description: Authenticate student via matric number and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [matricNo, password]
+              properties:
+                matricNo:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /mobile/me:
+    get:
+      tags:
+        - Mobile
+      summary: Get my profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Student profile
+
+  /mobile/me/classes:
+    get:
+      tags:
+        - Mobile
+      summary: Get my classes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Classes list
+
+  /mobile/me/sessions:
+    get:
+      tags:
+        - Mobile
+      summary: Get my sessions
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sessions list
+
+  /mobile/me/attendance:
+    get:
+      tags:
+        - Mobile
+      summary: Get my attendance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Attendance list
+
+  /mobile/attendance/mark:
+    post:
+      tags:
+        - Mobile
+      summary: Mark attendance
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkAttendanceRequest'
+      responses:
+        '201':
+          description: Attendance marked
+        '403':
+          description: Forbidden (validation failed)
     post:
       tags:
         - Authentication
