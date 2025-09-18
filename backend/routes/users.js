@@ -491,16 +491,34 @@ router.post('/', authMiddleware, validate(schemas.user.create), async (req, res)
       }
 
       // 7. Return full user with profile (if any) to the client
-      const joined = await client.query(
-        `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
-                sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
-                tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
-           FROM users u
-      LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
-      LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
-          WHERE u.user_id = $1`,
-        [newUser.user_id]
-      );
+      let joined;
+      try {
+        joined = await client.query(
+          `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+                  sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+                  tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
+             FROM users u
+        LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+        LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+            WHERE u.user_id = $1`,
+          [newUser.user_id]
+        );
+      } catch (err) {
+        if (err.code === '42703') {
+          joined = await client.query(
+            `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
+                    sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
+                    tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, NULL::varchar AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
+               FROM users u
+          LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
+          LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
+              WHERE u.user_id = $1`,
+            [newUser.user_id]
+          );
+        } else {
+          throw err;
+        }
+      }
 
       const r = joined.rows[0];
       const base = {
