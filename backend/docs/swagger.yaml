@@ -817,6 +817,8 @@ components:
           type: string
         department:
           type: string
+        faculty:
+          type: string
         office:
           type: string
           nullable: true
@@ -929,12 +931,17 @@ components:
           required:
             - lecturerNo
             - department
+            - faculty
           properties:
             lecturerNo:
               type: string
               minLength: 1
               maxLength: 100
             department:
+              type: string
+              minLength: 1
+              maxLength: 150
+            faculty:
               type: string
               minLength: 1
               maxLength: 150
@@ -983,8 +990,13 @@ components:
           type: object
           required:
             - department
+            - faculty
           properties:
             department:
+              type: string
+              minLength: 1
+              maxLength: 150
+            faculty:
               type: string
               minLength: 1
               maxLength: 150

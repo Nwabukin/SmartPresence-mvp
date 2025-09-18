@@ -91,6 +91,21 @@ Authorization: Bearer <token>
         "level": "300",
         "phone": "+1234567890"
       }
+    },
+    {
+      "user_id": 5,
+      "email": "lecturer@example.com",
+      "first_name": "Alice",
+      "last_name": "Lee",
+      "role": "teacher",
+      "created_at": "2025-01-17T10:30:00.000Z",
+      "profile": {
+        "lecturer_no": "LEC010",
+        "department": "Computer Science",
+        "faculty": "Engineering",
+        "office": "Room 2.14",
+        "phone": "+1234567000"
+      }
     }
   ],
   "timestamp": "2025-01-17T10:30:00.000Z"
@@ -163,6 +178,7 @@ Create a new user (Admin only).
   "profileTeacher": {
     "lecturerNo": "LEC001",
     "department": "Computer Science",
+    "faculty": "Engineering",
     "office": "Room 101",
     "phone": "+1234567892"
   }
