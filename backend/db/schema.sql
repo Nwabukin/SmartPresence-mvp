@@ -63,6 +63,7 @@ CREATE TABLE attendance_records (
     record_id SERIAL PRIMARY KEY,
     session_id INTEGER NOT NULL REFERENCES sessions(session_id) ON DELETE CASCADE,
     student_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    device_id VARCHAR(200),
     marked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     status attendance_status NOT NULL DEFAULT 'present',
     modified_by_teacher_id INTEGER REFERENCES users(user_id) ON DELETE SET NULL, -- Track manual modifications
@@ -76,6 +77,11 @@ CREATE INDEX idx_sessions_class_id ON sessions(class_id);
 CREATE INDEX idx_sessions_room_id ON sessions(room_id);
 CREATE INDEX idx_attendance_session_id ON attendance_records(session_id);
 CREATE INDEX idx_attendance_student_id ON attendance_records(student_id); 
+CREATE INDEX IF NOT EXISTS idx_attendance_device_id ON attendance_records(device_id);
+-- Enforce one device per session (prevents same device re-marking in a session)
+DO $$ BEGIN
+  ALTER TABLE attendance_records ADD CONSTRAINT uniq_session_device UNIQUE (session_id, device_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Profiles for Students and Teachers (role-specific data)
 CREATE TABLE IF NOT EXISTS student_profiles (
