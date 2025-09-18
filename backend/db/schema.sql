@@ -76,3 +76,22 @@ CREATE INDEX idx_sessions_class_id ON sessions(class_id);
 CREATE INDEX idx_sessions_room_id ON sessions(room_id);
 CREATE INDEX idx_attendance_session_id ON attendance_records(session_id);
 CREATE INDEX idx_attendance_student_id ON attendance_records(student_id); 
+
+-- Profiles for Students and Teachers (role-specific data)
+CREATE TABLE IF NOT EXISTS student_profiles (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    matric_no VARCHAR(100) UNIQUE NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    course VARCHAR(150) NOT NULL,
+    level VARCHAR(50) NOT NULL,
+    phone VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS teacher_profiles (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    lecturer_no VARCHAR(100) UNIQUE NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    faculty VARCHAR(150) NOT NULL,
+    office VARCHAR(150),
+    phone VARCHAR(50)
+);

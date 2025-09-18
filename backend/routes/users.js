@@ -27,7 +27,7 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
   const result = await db.query(
     `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
             sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
-            tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
+            tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
        FROM users u
   LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
   LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
@@ -61,6 +61,7 @@ router.get('/', authMiddleware, asyncHandler(async (req, res) => {
         profile: {
           lecturer_no: r.teacher_lecturer_no || null,
           department: r.teacher_department || null,
+          faculty: r.teacher_faculty || null,
           office: r.teacher_office || null,
           phone: r.teacher_phone || null,
         },
@@ -91,7 +92,7 @@ router.get('/:id', authMiddleware, validate(schemas.user.getById, 'params'), asy
     const result = await db.query(
       `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
               sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
-              tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
+              tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
          FROM users u
     LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
     LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
@@ -130,6 +131,7 @@ router.get('/:id', authMiddleware, validate(schemas.user.getById, 'params'), asy
         profile: {
           lecturer_no: r.teacher_lecturer_no || null,
           department: r.teacher_department || null,
+          faculty: r.teacher_faculty || null,
           office: r.teacher_office || null,
           phone: r.teacher_phone || null,
         },
@@ -276,16 +278,17 @@ router.put('/:id', authMiddleware, validate(schemas.user.getById, 'params'), val
         );
       }
       if (targetRole === ROLES.TEACHER && profileTeacher) {
-        const { lecturerNo, department, office, phone } = profileTeacher;
+        const { lecturerNo, department, faculty, office, phone } = profileTeacher;
         await client.query(
-          `INSERT INTO teacher_profiles (user_id, lecturer_no, department, office, phone)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO teacher_profiles (user_id, lecturer_no, department, faculty, office, phone)
+           VALUES ($1, $2, $3, $4, $5, $6)
            ON CONFLICT (user_id) DO UPDATE SET
              lecturer_no = EXCLUDED.lecturer_no,
              department = EXCLUDED.department,
+             faculty = EXCLUDED.faculty,
              office = EXCLUDED.office,
              phone = EXCLUDED.phone`,
-          [baseUser.user_id, lecturerNo, department, office || null, phone || null]
+          [baseUser.user_id, lecturerNo, department, faculty || null, office || null, phone || null]
         );
       }
 
@@ -412,13 +415,13 @@ router.post('/', authMiddleware, validate(schemas.user.create), async (req, res)
         }
       } else if (role === ROLES.TEACHER) {
         if (profileTeacher) {
-          const { lecturerNo, department, office, phone } = profileTeacher;
-          if (!lecturerNo || !department) {
-            throw new Error('Missing required teacher profile fields (lecturerNo, department).');
+          const { lecturerNo, department, faculty, office, phone } = profileTeacher;
+          if (!lecturerNo || !department || !faculty) {
+            throw new Error('Missing required teacher profile fields (lecturerNo, department, faculty).');
           }
           await client.query(
-            'INSERT INTO teacher_profiles (user_id, lecturer_no, department, office, phone) VALUES ($1, $2, $3, $4, $5)',
-            [newUser.user_id, lecturerNo, department, office || null, phone || null]
+            'INSERT INTO teacher_profiles (user_id, lecturer_no, department, faculty, office, phone) VALUES ($1, $2, $3, $4, $5, $6)',
+            [newUser.user_id, lecturerNo, department, faculty, office || null, phone || null]
           );
         }
       }
@@ -427,7 +430,7 @@ router.post('/', authMiddleware, validate(schemas.user.create), async (req, res)
       const joined = await client.query(
         `SELECT u.user_id, u.email, u.first_name, u.last_name, u.role, u.created_at,
                 sp.matric_no AS student_matric_no, sp.department AS student_department, sp.course AS student_course, sp.level AS student_level, sp.phone AS student_phone,
-                tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.office AS teacher_office, tp.phone AS teacher_phone
+                tp.lecturer_no AS teacher_lecturer_no, tp.department AS teacher_department, tp.faculty AS teacher_faculty, tp.office AS teacher_office, tp.phone AS teacher_phone
            FROM users u
       LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
       LEFT JOIN teacher_profiles tp ON tp.user_id = u.user_id
@@ -463,6 +466,7 @@ router.post('/', authMiddleware, validate(schemas.user.create), async (req, res)
           profile: {
             lecturer_no: r.teacher_lecturer_no || null,
             department: r.teacher_department || null,
+            faculty: r.teacher_faculty || null,
             office: r.teacher_office || null,
             phone: r.teacher_phone || null,
           },

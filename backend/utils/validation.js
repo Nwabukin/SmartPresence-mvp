@@ -6,6 +6,7 @@ const commonPatterns = {
   password: Joi.string().min(6).max(100).required(),
   name: Joi.string().min(1).max(100).trim().required(),
   optionalName: Joi.string().min(1).max(100).trim().allow(''),
+  optionalLongName: Joi.string().min(1).max(150).trim().allow(''),
   phone: Joi.string().max(50).allow('', null),
   id: Joi.number().integer().positive().required(),
   optionalId: Joi.number().integer().positive().allow(null),
@@ -38,6 +39,7 @@ const userSchemas = {
       then: Joi.object({
         lecturerNo: Joi.string().min(1).max(100).trim().required(),
         department: commonPatterns.name,
+        faculty: commonPatterns.optionalLongName.required(),
         office: commonPatterns.optionalName,
         phone: commonPatterns.phone,
       }).required(),
@@ -59,6 +61,7 @@ const userSchemas = {
     profileTeacher: Joi.object({
       lecturerNo: Joi.string().min(1).max(100).trim(),
       department: commonPatterns.optionalName,
+      faculty: commonPatterns.optionalLongName,
       office: commonPatterns.optionalName,
       phone: commonPatterns.phone,
     }).optional(),
