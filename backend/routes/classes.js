@@ -40,14 +40,15 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 
   try {
-    // Admins see all classes. Teachers see all classes for now (can be refined to only their classes).
-    const query = ROLES.ADMIN === req.user.role 
-        ? 'SELECT * FROM classes ORDER BY created_at DESC' 
-        : 'SELECT * FROM classes ORDER BY created_at DESC'; // Modify if teachers should only see their own
-        // : 'SELECT * FROM classes WHERE teacher_id = $1 ORDER BY created_at DESC';
-    
-    // const params = ROLES.ADMIN === req.user.role ? [] : [req.user.id];
-    const result = await db.query(query /*, params */);
+    let query;
+    let params = [];
+    if (req.user.role === ROLES.ADMIN) {
+      query = 'SELECT * FROM classes ORDER BY created_at DESC';
+    } else {
+      query = 'SELECT * FROM classes WHERE teacher_id = $1 ORDER BY created_at DESC';
+      params = [req.user.id];
+    }
+    const result = await db.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching classes:', err);
