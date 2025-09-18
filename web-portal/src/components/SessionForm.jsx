@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const SessionForm = ({
   onSubmit,
-  initialData = null,
+  initialData = {},
   classes = [],
   rooms = [],
   onCancel,
@@ -19,15 +19,27 @@ const SessionForm = ({
     if (isEditMode && initialData) {
       setClassId(initialData.class_id || '');
       setRoomId(initialData.room_id || '');
-      setSessionDate(
-        initialData.session_date
-          ? new Date(initialData.session_date).toISOString().split('T')[0]
-          : ''
-      );
-      setStartTime(initialData.start_time || '');
-      setEndTime(initialData.end_time || '');
+      
+      // Extract date and time from ISO timestamps
+      if (initialData.start_time) {
+        const startDate = new Date(initialData.start_time);
+        setSessionDate(startDate.toISOString().split('T')[0]);
+        setStartTime(startDate.toTimeString().slice(0, 5)); // HH:MM format
+      }
+      
+      if (initialData.end_time) {
+        const endDate = new Date(initialData.end_time);
+        setEndTime(endDate.toTimeString().slice(0, 5)); // HH:MM format
+      }
+    } else {
+      // Reset form for create mode or if no initial data
+      setClassId('');
+      setRoomId('');
+      setSessionDate('');
+      setStartTime('');
+      setEndTime('');
     }
-  }, [isEditMode, initialData]);
+  }, [initialData, isEditMode]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -41,12 +53,16 @@ const SessionForm = ({
       return;
     }
     setFormError('');
+    
+    // Combine date and time into ISO timestamps
+    const startDateTime = new Date(`${sessionDate}T${startTime}:00`).toISOString();
+    const endDateTime = new Date(`${sessionDate}T${endTime}:00`).toISOString();
+    
     onSubmit({
       class_id: parseInt(classId),
       room_id: parseInt(roomId),
-      session_date: sessionDate,
-      start_time: startTime,
-      end_time: endTime,
+      start_time: startDateTime,
+      end_time: endDateTime,
     });
   };
 
@@ -65,10 +81,7 @@ const SessionForm = ({
         <select
           id="class"
           value={classId}
-          onChange={(e) => {
-            setClassId(e.target.value);
-          }}
-          autoFocus
+          onChange={(e) => setClassId(e.target.value)}
           required
           style={{ width: '100%', padding: '8px' }}
         >
@@ -87,9 +100,7 @@ const SessionForm = ({
         <select
           id="room"
           value={roomId}
-          onChange={(e) => {
-            setRoomId(e.target.value);
-          }}
+          onChange={(e) => setRoomId(e.target.value)}
           required
           style={{ width: '100%', padding: '8px' }}
         >
@@ -112,9 +123,7 @@ const SessionForm = ({
           id="sessionDate"
           type="date"
           value={sessionDate}
-          onChange={(e) => {
-            setSessionDate(e.target.value);
-          }}
+          onChange={(e) => setSessionDate(e.target.value)}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -130,9 +139,7 @@ const SessionForm = ({
           id="startTime"
           type="time"
           value={startTime}
-          onChange={(e) => {
-            setStartTime(e.target.value);
-          }}
+          onChange={(e) => setStartTime(e.target.value)}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -148,9 +155,7 @@ const SessionForm = ({
           id="endTime"
           type="time"
           value={endTime}
-          onChange={(e) => {
-            setEndTime(e.target.value);
-          }}
+          onChange={(e) => setEndTime(e.target.value)}
           required
           style={{ width: '100%', padding: '8px' }}
         />

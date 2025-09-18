@@ -392,6 +392,81 @@ p {
   margin-top: var(--space-1);
 }
 
+/* Enhanced Select Styling */
+.select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.select select {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  padding-right: var(--space-10);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  background-color: white;
+  color: var(--gray-900);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.select select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgb(14 165 233 / 0.1);
+}
+
+.select select:hover:not(:disabled) {
+  border-color: var(--gray-400);
+}
+
+.select select:disabled {
+  background-color: var(--gray-50);
+  color: var(--gray-500);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.select::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid var(--gray-400);
+  pointer-events: none;
+}
+
+.select select:focus + .select::after {
+  border-top-color: var(--primary-500);
+}
+
+/* Select variants */
+.select-bordered select {
+  border: 1px solid var(--gray-300);
+}
+
+.select-sm select {
+  padding: var(--space-2) var(--space-3);
+  padding-right: var(--space-8);
+  font-size: var(--font-size-xs);
+}
+
+.select-lg select {
+  padding: var(--space-4) var(--space-5);
+  padding-right: var(--space-12);
+  font-size: var(--font-size-base);
+}
+
 /* Navigation */
 .navbar {
   background: white;

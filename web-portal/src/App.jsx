@@ -8,6 +8,7 @@ import AdminUserManagementPage from './pages/admin/AdminUserManagementPage';
 import AdminClassOversightPage from './pages/admin/AdminClassOversightPage';
 import AdminSessionOversightPage from './pages/admin/AdminSessionOversightPage';
 import AdminAttendanceOversightPage from './pages/admin/AdminAttendanceOversightPage';
+import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import TeacherClassManagementPage from './pages/teacher/TeacherClassManagementPage';
 import TeacherEnrollmentPage from './pages/teacher/TeacherEnrollmentPage';
 import TeacherSessionManagementPage from './pages/teacher/TeacherSessionManagementPage';
@@ -59,6 +60,9 @@ function App() {
                   
                   {user?.role === 'teacher' && (
                     <>
+                      <li>
+                        <Link to="/teacher/dashboard">Dashboard</Link>
+                      </li>
                       <li>
                         <Link to="/teacher/classes">My Classes</Link>
                       </li>
@@ -155,6 +159,14 @@ function App() {
           element={
             <ProtectedRoute role="admin">
               <AdminAttendanceOversightPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/dashboard"
+          element={
+            <ProtectedRoute role="teacher">
+              <TeacherDashboard />
             </ProtectedRoute>
           }
         />
