@@ -20,18 +20,6 @@ const UserForm = ({
   const [role, setRole] = useState(ROLES.STUDENT); // Default role
   const [formError, setFormError] = useState('');
 
-  // Role-specific state
-  const [studentMatricNo, setStudentMatricNo] = useState('');
-  const [studentDepartment, setStudentDepartment] = useState('');
-  const [studentCourse, setStudentCourse] = useState('');
-  const [studentLevel, setStudentLevel] = useState('');
-  const [studentPhone, setStudentPhone] = useState('');
-
-  const [teacherLecturerNo, setTeacherLecturerNo] = useState('');
-  const [teacherDepartment, setTeacherDepartment] = useState('');
-  const [teacherOffice, setTeacherOffice] = useState('');
-  const [teacherPhone, setTeacherPhone] = useState('');
-
   useEffect(() => {
     if (isEditMode && initialData) {
       setFirstName(initialData.first_name || '');
@@ -39,20 +27,6 @@ const UserForm = ({
       setEmail(initialData.email || '');
       setRole(initialData.role || ROLES.STUDENT);
       setPassword('');
-
-      const profile = initialData.profile || {};
-      if (initialData.role === ROLES.STUDENT) {
-        setStudentMatricNo(profile.matric_no || '');
-        setStudentDepartment(profile.department || '');
-        setStudentCourse(profile.course || '');
-        setStudentLevel(profile.level || '');
-        setStudentPhone(profile.phone || '');
-      } else if (initialData.role === ROLES.TEACHER) {
-        setTeacherLecturerNo(profile.lecturer_no || '');
-        setTeacherDepartment(profile.department || '');
-        setTeacherOffice(profile.office || '');
-        setTeacherPhone(profile.phone || '');
-      }
     }
   }, [isEditMode, initialData]);
 
@@ -73,18 +47,6 @@ const UserForm = ({
       setFormError('Invalid role selected.');
       return;
     }
-    if (!isEditMode && role === ROLES.STUDENT) {
-      if (!studentMatricNo.trim() || !studentDepartment.trim() || !studentCourse.trim() || !studentLevel.trim()) {
-        setFormError('Student profile requires matric no, department, course, and level.');
-        return;
-      }
-    }
-    if (!isEditMode && role === ROLES.TEACHER) {
-      if (!teacherLecturerNo.trim() || !teacherDepartment.trim()) {
-        setFormError('Teacher profile requires lecturer ID/No and department.');
-        return;
-      }
-    }
     setFormError('');
     const userData = {
       firstName: firstName.trim(),
@@ -95,43 +57,6 @@ const UserForm = ({
     if (!isEditMode && password) {
       userData.password = password;
     }
-    if (role === ROLES.STUDENT) {
-      const hasAllStudent =
-        !!studentMatricNo.trim() &&
-        !!studentDepartment.trim() &&
-        !!studentCourse.trim() &&
-        !!studentLevel.trim();
-      if (!isEditMode || hasAllStudent) {
-        // On create we require; on edit we include only if all provided
-        userData.profileStudent = {
-          matricNo: studentMatricNo.trim(),
-          department: studentDepartment.trim(),
-          course: studentCourse.trim(),
-          level: studentLevel.trim(),
-          phone: studentPhone.trim() || undefined,
-        };
-      }
-    } else if (role === ROLES.TEACHER) {
-      const hasRequiredTeacher =
-        !!teacherLecturerNo.trim() && !!teacherDepartment.trim();
-      if (!isEditMode || hasRequiredTeacher) {
-        userData.profileTeacher = {
-          lecturerNo: teacherLecturerNo.trim(),
-          department: teacherDepartment.trim(),
-          office: teacherOffice.trim() || undefined,
-          phone: teacherPhone.trim() || undefined,
-        };
-      }
-    }
-    // Debug: local form payload summary
-    // eslint-disable-next-line no-console
-    console.log('[UserForm] submit', {
-      mode: isEditMode ? 'edit' : 'create',
-      role,
-      hasPassword: Boolean(userData.password),
-      hasStudentProfile: Boolean(userData.profileStudent),
-      hasTeacherProfile: Boolean(userData.profileTeacher),
-    });
     onSubmit(userData);
   };
 
@@ -146,7 +71,10 @@ const UserForm = ({
           id="firstName"
           type="text"
           value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          onChange={(e) => {
+            setFirstName(e.target.value);
+          }}
+          autoFocus
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -157,7 +85,9 @@ const UserForm = ({
           id="lastName"
           type="text"
           value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          onChange={(e) => {
+            setLastName(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -168,7 +98,9 @@ const UserForm = ({
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         />
@@ -180,7 +112,9 @@ const UserForm = ({
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
             required
             style={{ width: '100%', padding: '8px' }}
           />
@@ -191,7 +125,9 @@ const UserForm = ({
         <select
           id="role"
           value={role}
-          onChange={(e) => setRole(e.target.value)}
+          onChange={(e) => {
+            setRole(e.target.value);
+          }}
           required
           style={{ width: '100%', padding: '8px' }}
         >
@@ -200,113 +136,6 @@ const UserForm = ({
           <option value={ROLES.STUDENT}>Student</option>
         </select>
       </div>
-
-      {role === ROLES.STUDENT && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <div>
-            <label htmlFor="matricNo">Matric No.:</label>
-            <input
-              id="matricNo"
-              type="text"
-              value={studentMatricNo}
-              onChange={(e) => setStudentMatricNo(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-          <div>
-            <label htmlFor="studentDepartment">Department:</label>
-            <input
-              id="studentDepartment"
-              type="text"
-              value={studentDepartment}
-              onChange={(e) => setStudentDepartment(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-          <div>
-            <label htmlFor="studentCourse">Course:</label>
-            <input
-              id="studentCourse"
-              type="text"
-              value={studentCourse}
-              onChange={(e) => setStudentCourse(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-          <div>
-            <label htmlFor="studentLevel">Level:</label>
-            <input
-              id="studentLevel"
-              type="text"
-              value={studentLevel}
-              onChange={(e) => setStudentLevel(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-          <div>
-            <label htmlFor="studentPhone">Phone (optional):</label>
-            <input
-              id="studentPhone"
-              type="tel"
-              value={studentPhone}
-              onChange={(e) => setStudentPhone(e.target.value)}
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {role === ROLES.TEACHER && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <div>
-            <label htmlFor="lecturerNo">Lecturer ID/No.:</label>
-            <input
-              id="lecturerNo"
-              type="text"
-              value={teacherLecturerNo}
-              onChange={(e) => setTeacherLecturerNo(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-          <div>
-            <label htmlFor="teacherDepartment">Department:</label>
-            <input
-              id="teacherDepartment"
-              type="text"
-              value={teacherDepartment}
-              onChange={(e) => setTeacherDepartment(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-          <div>
-            <label htmlFor="teacherOffice">Office (optional):</label>
-            <input
-              id="teacherOffice"
-              type="text"
-              value={teacherOffice}
-              onChange={(e) => setTeacherOffice(e.target.value)}
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-          <div>
-            <label htmlFor="teacherPhone">Phone (optional):</label>
-            <input
-              id="teacherPhone"
-              type="tel"
-              value={teacherPhone}
-              onChange={(e) => setTeacherPhone(e.target.value)}
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
-        </div>
-      )}
-
       {formError && <p style={{ color: 'red', marginTop: 0 }}>{formError}</p>}
       <div
         style={{
