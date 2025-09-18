@@ -1381,6 +1381,7 @@ components:
         - class_id
         - session_id
         - wifi_ssid
+        - device_id
       properties:
         class_id:
           type: integer
@@ -1395,6 +1396,9 @@ components:
         bluetooth_beacon_id:
           type: string
           maxLength: 100
+        device_id:
+          type: string
+          maxLength: 200
 
     UpdateAttendanceRequest:
       type: object
