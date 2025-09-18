@@ -32,6 +32,11 @@ router.post('/login', validate(schemas.auth.login), async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials.' }); // User not found
     }
 
+    // Block student role on web login: students must use mobile app login
+    if (user.role === 'student') {
+      return res.status(403).json({ error: 'Students must use the mobile app to log in.' });
+    }
+
     // Compare submitted password with stored hash
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
