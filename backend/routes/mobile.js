@@ -142,7 +142,7 @@ router.get('/me/attendance', authMiddleware, async (req, res) => {
 // POST /api/mobile/attendance/mark
 router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark), async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
-  const { class_id, session_id, wifi_ssid, bluetooth_beacon_id } = req.body;
+  const { class_id, session_id, wifi_ssid, bluetooth_beacon_id, device_id } = req.body;
   try {
     // Verify enrollment
     const enr = await db.query('SELECT 1 FROM enrollments WHERE student_id = $1 AND class_id = $2', [req.user.id, class_id]);
@@ -173,14 +173,23 @@ router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark
       return res.status(403).json({ error: 'Beacon mismatch' });
     }
 
-    // Idempotent insert
+    // Enforce one device per session and idempotency per student
     const rec = await db.query(
-      `INSERT INTO attendance_records (session_id, student_id, status)
-       VALUES ($1, $2, 'present')
+      `INSERT INTO attendance_records (session_id, student_id, device_id, status)
+       VALUES ($1, $2, $3, 'present')
        ON CONFLICT (session_id, student_id) DO UPDATE SET status = EXCLUDED.status
-       RETURNING record_id, session_id, student_id, status, marked_at`,
-      [session_id, req.user.id]
-    );
+       RETURNING record_id, session_id, student_id, device_id, status, marked_at`,
+      [session_id, req.user.id, device_id]
+    ).catch(async (err) => {
+      // Unique (session_id, device_id) violation => device already used in this session
+      if (err.code === '23505') {
+        return { rows: [], conflictDevice: true };
+      }
+      throw err;
+    });
+    if (rec.conflictDevice) {
+      return res.status(409).json({ error: 'This device has already marked attendance for this session.' });
+    }
     const created = rec.rows[0];
     res.status(201).json(created);
   } catch (err) {

@@ -156,6 +156,7 @@ const attendanceSchemas = {
     session_id: commonPatterns.id,
     wifi_ssid: Joi.string().min(1).max(100).trim().required(),
     bluetooth_beacon_id: Joi.string().max(100).trim().allow('', null),
+    device_id: Joi.string().min(3).max(200).trim().required(),
   }),
 
   getByRecordId: Joi.object({
