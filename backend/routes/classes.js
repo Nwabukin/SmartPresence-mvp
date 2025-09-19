@@ -4,6 +4,7 @@ const db = require('../db'); // Database connection
 const authMiddleware = require('../middleware/auth'); // Authentication middleware
 const ROLES = require('../utils/roles'); // Roles
 const { validate, schemas } = require('../utils/validation'); // Input validation
+const NotificationService = require('../services/notificationService');
 
 // Placeholder for Class model structure (fields we expect for a class)
 // Example: { class_name: "Introduction to Programming", course_code: "CS101", teacher_id: 1 }
@@ -249,6 +250,22 @@ router.post('/:classId/students', authMiddleware, async (req, res) => {
       'INSERT INTO enrollments (class_id, student_id) VALUES ($1, $2) RETURNING *',
       [classIdInt, studentIdInt]
     );
+    
+    // Create class enrollment notification for the student
+    try {
+      const classResult = await db.query('SELECT name FROM classes WHERE class_id = $1', [classIdInt]);
+      const class_name = classResult.rows[0]?.name || 'Unknown Class';
+      
+      await NotificationService.createClassEnrollmentNotification(
+        studentIdInt,
+        classIdInt,
+        class_name
+      );
+    } catch (notificationError) {
+      console.error('Error creating class enrollment notification:', notificationError);
+      // Don't fail the enrollment if notification fails
+    }
+    
     res.status(201).json(enrollmentResult.rows[0]);
   } catch (err) {
     if (err.code === '23505') { // Unique violation (student already enrolled)

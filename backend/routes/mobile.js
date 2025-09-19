@@ -5,6 +5,7 @@ const router = express.Router();
 const db = require('../db');
 const { validate, schemas } = require('../utils/validation');
 const authMiddleware = require('../middleware/auth');
+const NotificationService = require('../services/notificationService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -191,6 +192,23 @@ router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark
       return res.status(409).json({ error: 'This device has already marked attendance for this session.' });
     }
     const created = rec.rows[0];
+    
+    // Create attendance confirmation notification
+    try {
+      const classResult = await db.query('SELECT name FROM classes WHERE class_id = $1', [class_id]);
+      const class_name = classResult.rows[0]?.name || 'Unknown Class';
+      
+      await NotificationService.createAttendanceConfirmationNotification(
+        req.user.id,
+        session_id,
+        class_id,
+        class_name
+      );
+    } catch (notificationError) {
+      console.error('Error creating attendance confirmation notification:', notificationError);
+      // Don't fail the attendance marking if notification fails
+    }
+    
     res.status(201).json(created);
   } catch (err) {
     console.error('Mobile attendance mark error:', err);
