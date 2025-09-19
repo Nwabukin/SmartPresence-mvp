@@ -5,6 +5,7 @@ const router = express.Router();
 const db = require('../db');
 const { validate, schemas } = require('../utils/validation');
 const authMiddleware = require('../middleware/auth');
+const NotificationService = require('../services/notificationService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -191,9 +192,153 @@ router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark
       return res.status(409).json({ error: 'This device has already marked attendance for this session.' });
     }
     const created = rec.rows[0];
+    
+    // Create attendance confirmation notification
+    try {
+      const classResult = await db.query('SELECT name FROM classes WHERE class_id = $1', [class_id]);
+      const class_name = classResult.rows[0]?.name || 'Unknown Class';
+      
+      await NotificationService.createAttendanceConfirmationNotification(
+        req.user.id,
+        session_id,
+        class_id,
+        class_name
+      );
+    } catch (notificationError) {
+      console.error('Error creating attendance confirmation notification:', notificationError);
+      // Don't fail the attendance marking if notification fails
+    }
+    
     res.status(201).json(created);
   } catch (err) {
     console.error('Mobile attendance mark error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/mobile/me/notifications
+router.get('/me/notifications', authMiddleware, validate(schemas.notification.getNotifications, 'query'), async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  
+  const { page = 1, limit = 20, unread_only = false } = req.query;
+  const offset = (page - 1) * limit;
+  
+  try {
+    let whereClause = 'WHERE n.user_id = $1';
+    const params = [req.user.id];
+    
+    if (unread_only === 'true') {
+      whereClause += ' AND n.is_read = false';
+    }
+    
+    const q = await db.query(
+      `SELECT n.notification_id, n.type, n.title, n.message, n.is_read, 
+              n.related_session_id, n.related_class_id, n.created_at, n.read_at,
+              c.name AS class_name,
+              s.start_time AS session_start_time
+         FROM notifications n
+    LEFT JOIN classes c ON c.class_id = n.related_class_id
+    LEFT JOIN sessions s ON s.session_id = n.related_session_id
+        ${whereClause}
+        ORDER BY n.created_at DESC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
+    );
+    
+    // Get total count for pagination
+    const countQuery = await db.query(
+      `SELECT COUNT(*) as total FROM notifications n ${whereClause}`,
+      params
+    );
+    
+    const total = parseInt(countQuery.rows[0].total);
+    const totalPages = Math.ceil(total / limit);
+    
+    res.json({
+      notifications: q.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
+  } catch (err) {
+    console.error('Mobile notifications error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/mobile/me/notifications/unread-count
+router.get('/me/notifications/unread-count', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  
+  try {
+    const q = await db.query(
+      'SELECT COUNT(*) as unread_count FROM notifications WHERE user_id = $1 AND is_read = false',
+      [req.user.id]
+    );
+    
+    res.json({ unread_count: parseInt(q.rows[0].unread_count) });
+  } catch (err) {
+    console.error('Mobile notifications unread count error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /api/mobile/notifications/:id/read
+router.put('/notifications/:id/read', authMiddleware, validate(schemas.notification.markRead, 'params'), async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  
+  const { id } = req.params;
+  
+  try {
+    const q = await db.query(
+      `UPDATE notifications 
+       SET is_read = true, read_at = CURRENT_TIMESTAMP 
+       WHERE notification_id = $1 AND user_id = $2 
+       RETURNING notification_id, is_read, read_at`,
+      [id, req.user.id]
+    );
+    
+    if (!q.rows.length) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    
+    res.json({ 
+      notification_id: q.rows[0].notification_id,
+      is_read: q.rows[0].is_read,
+      read_at: q.rows[0].read_at
+    });
+  } catch (err) {
+    console.error('Mobile notification mark read error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /api/mobile/notifications/mark-all-read
+router.put('/notifications/mark-all-read', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  
+  try {
+    const q = await db.query(
+      `UPDATE notifications 
+       SET is_read = true, read_at = CURRENT_TIMESTAMP 
+       WHERE user_id = $1 AND is_read = false 
+       RETURNING COUNT(*) as updated_count`,
+      [req.user.id]
+    );
+    
+    const updatedCount = parseInt(q.rows[0].updated_count);
+    
+    res.json({ 
+      message: `Marked ${updatedCount} notifications as read`,
+      updated_count: updatedCount
+    });
+  } catch (err) {
+    console.error('Mobile notifications mark all read error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

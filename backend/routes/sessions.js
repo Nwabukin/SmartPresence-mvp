@@ -4,6 +4,7 @@ const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const ROLES = require('../utils/roles');
 const { validate, schemas } = require('../utils/validation'); // Input validation
+const NotificationService = require('../services/notificationService');
 
 // Helper function to check if user can manage a session (teacher owns the class)
 async function canManageSession(userId, userRole, classId) {
@@ -41,7 +42,27 @@ router.post('/', authMiddleware, validate(schemas.session.create), async (req, r
       'INSERT INTO sessions (class_id, room_id, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING *',
       [class_id, room_id, start_time, end_time]
     );
-    res.status(201).json(result.rows[0]);
+    
+    const newSession = result.rows[0];
+    
+    // Create session reminder notifications for enrolled students
+    try {
+      // Get class name for notification
+      const classResult = await db.query('SELECT name FROM classes WHERE class_id = $1', [class_id]);
+      const class_name = classResult.rows[0]?.name || 'Unknown Class';
+      
+      await NotificationService.createSessionReminderNotifications(
+        newSession.session_id,
+        class_id,
+        class_name,
+        newSession.start_time
+      );
+    } catch (notificationError) {
+      console.error('Error creating session reminder notifications:', notificationError);
+      // Don't fail the session creation if notifications fail
+    }
+    
+    res.status(201).json(newSession);
   } catch (err) {
     console.error('Error creating session:', err);
     res.status(500).json({ error: 'Server error creating session.' });

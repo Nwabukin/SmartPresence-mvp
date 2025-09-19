@@ -119,6 +119,109 @@ paths:
           description: Attendance marked
         '403':
           description: Forbidden (validation failed)
+        '409':
+          description: Device already used in session
+
+  /mobile/me/notifications:
+    get:
+      tags:
+        - Mobile
+      summary: Get student notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+
+  /mobile/me/notifications/unread-count:
+    get:
+      tags:
+        - Mobile
+      summary: Get unread notification count
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread_count:
+                    type: integer
+
+  /mobile/notifications/{id}/read:
+    put:
+      tags:
+        - Mobile
+      summary: Mark notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notification_id:
+                    type: integer
+                  is_read:
+                    type: boolean
+                  read_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Notification not found
+
+  /mobile/notifications/mark-all-read:
+    put:
+      tags:
+        - Mobile
+      summary: Mark all notifications as read
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  updated_count:
+                    type: integer
     post:
       tags:
         - Authentication
@@ -1398,6 +1501,7 @@ components:
           maxLength: 100
         device_id:
           type: string
+          minLength: 3
           maxLength: 200
 
     UpdateAttendanceRequest:
@@ -1408,6 +1512,59 @@ components:
         status:
           type: string
           enum: [present, absent, late, excused]
+
+    Notification:
+      type: object
+      properties:
+        notification_id:
+          type: integer
+        type:
+          type: string
+          enum: [session_reminder, attendance_confirmed, session_cancelled, class_enrolled]
+        title:
+          type: string
+        message:
+          type: string
+        is_read:
+          type: boolean
+        related_session_id:
+          type: integer
+        related_class_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+        class_name:
+          type: string
+        session_start_time:
+          type: string
+          format: date-time
+
+    NotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+            hasNext:
+              type: boolean
+            hasPrev:
+              type: boolean
 
 tags:
   - name: Authentication

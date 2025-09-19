@@ -112,14 +112,94 @@ Request Body:
   "class_id": 10,
   "session_id": 55,
   "wifi_ssid": "SmartPresence_Lab1",
-  "bluetooth_beacon_id": "BEACON_002"
+  "bluetooth_beacon_id": "BEACON_002",
+  "device_id": "device-unique-id"
 }
 ```
 
 Responses:
 - 201: attendance record
 - 403: not enrolled / outside session window / location mismatch
-- 409: already marked (idempotent upsert returns updated)
+- 409: already marked (idempotent upsert returns updated) / device already used in session
+
+### Get My Notifications (Mobile)
+**GET** `/mobile/me/notifications?page=1&limit=20&unread_only=false`
+
+Query Parameters:
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20, max: 100)
+- `unread_only` (optional): Filter unread notifications only (default: false)
+
+Response (200):
+```json
+{
+  "notifications": [
+    {
+      "notification_id": 1,
+      "type": "session_reminder",
+      "title": "Session Reminder",
+      "message": "Your Physics 101 session is starting soon at 1/17/2025, 2:00:00 PM. Don't forget to mark your attendance!",
+      "is_read": false,
+      "related_session_id": 1,
+      "related_class_id": 1,
+      "created_at": "2025-01-17T10:30:00.000Z",
+      "read_at": null,
+      "class_name": "Physics 101",
+      "session_start_time": "2025-01-17T14:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 5,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrev": false
+  }
+}
+```
+
+### Get Unread Notification Count (Mobile)
+**GET** `/mobile/me/notifications/unread-count`
+
+Response (200):
+```json
+{
+  "unread_count": 3
+}
+```
+
+### Mark Notification as Read (Mobile)
+**PUT** `/mobile/notifications/:id/read`
+
+Response (200):
+```json
+{
+  "notification_id": 1,
+  "is_read": true,
+  "read_at": "2025-01-17T10:35:00.000Z"
+}
+```
+
+### Mark All Notifications as Read (Mobile)
+**PUT** `/mobile/notifications/mark-all-read`
+
+Response (200):
+```json
+{
+  "message": "Marked 3 notifications as read",
+  "updated_count": 3
+}
+```
+
+### Notification Types
+
+The system supports the following notification types:
+
+- **session_reminder**: Created when a session is scheduled
+- **attendance_confirmed**: Created when attendance is successfully marked
+- **session_cancelled**: Created when a session is cancelled
+- **class_enrolled**: Created when a student is enrolled in a class
 
 
 ### Get All Users
