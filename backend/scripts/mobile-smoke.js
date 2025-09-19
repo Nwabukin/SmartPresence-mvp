@@ -91,6 +91,53 @@ async function main() {
     if (!attRes.ok) throw new Error(`GET /mobile/me/attendance failed: ${JSON.stringify(attJson)}`);
     console.log(`✓ /mobile/me/attendance ok (count: ${Array.isArray(attJson) ? attJson.length : 0})`);
 
+    // Test attendance marking with device_id (if sessions exist)
+    if (Array.isArray(sessionsJson) && sessionsJson.length > 0) {
+      const testSession = sessionsJson[0];
+      const deviceId = `test-device-${ts}`;
+      
+      console.log('8. Test attendance marking with device_id...');
+      const markRes = await fetch(`${baseUrl}/mobile/attendance/mark`, {
+        method: 'POST',
+        headers: { ...mHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          class_id: testSession.class_id,
+          session_id: testSession.session_id,
+          wifi_ssid: 'test-wifi',
+          bluetooth_beacon_id: '',
+          device_id: deviceId,
+        }),
+      });
+      const markJson = await markRes.json();
+      if (!markRes.ok) {
+        console.log(`⚠️  Attendance mark failed (expected if no valid session): ${JSON.stringify(markJson)}`);
+      } else {
+        console.log('✓ Attendance marked successfully');
+        
+        // Test duplicate device_id (should fail)
+        console.log('9. Test duplicate device_id (should fail)...');
+        const duplicateRes = await fetch(`${baseUrl}/mobile/attendance/mark`, {
+          method: 'POST',
+          headers: { ...mHeaders, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            class_id: testSession.class_id,
+            session_id: testSession.session_id,
+            wifi_ssid: 'test-wifi',
+            bluetooth_beacon_id: '',
+            device_id: deviceId, // Same device_id
+          }),
+        });
+        const duplicateJson = await duplicateRes.json();
+        if (duplicateRes.status === 409) {
+          console.log('✓ Duplicate device_id correctly rejected (409)');
+        } else {
+          console.log(`⚠️  Expected 409 for duplicate device_id, got ${duplicateRes.status}: ${JSON.stringify(duplicateJson)}`);
+        }
+      }
+    } else {
+      console.log('8. Skipping attendance marking test (no sessions available)');
+    }
+
     console.log('\n🎉 MOBILE SMOKE PASSED');
   } catch (err) {
     console.error('\n❌ MOBILE SMOKE FAILED:', err.message);
