@@ -176,6 +176,19 @@ const authSchemas = {
   }),
 };
 
+// Notification validation schemas
+const notificationSchemas = {
+  getNotifications: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    unread_only: Joi.boolean().default(false),
+  }),
+  
+  markRead: Joi.object({
+    id: commonPatterns.id,
+  }),
+};
+
 // Validation middleware factory
 const validate = (schema, property = 'body') => {
   return (req, res, next) => {
@@ -230,5 +243,6 @@ module.exports = {
     session: sessionSchemas,
     attendance: attendanceSchemas,
     auth: authSchemas,
+    notification: notificationSchemas,
   },
 };
