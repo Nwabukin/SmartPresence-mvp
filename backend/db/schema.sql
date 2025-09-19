@@ -101,3 +101,23 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
     office VARCHAR(150),
     phone VARCHAR(50)
 );
+
+-- Notifications table for student notifications
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL, -- 'session_reminder', 'attendance_confirmed', 'session_cancelled', 'class_enrolled'
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    related_session_id INTEGER REFERENCES sessions(session_id) ON DELETE CASCADE,
+    related_class_id INTEGER REFERENCES classes(class_id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Indexes for notifications table
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
