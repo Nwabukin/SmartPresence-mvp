@@ -166,13 +166,20 @@ router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark
       return res.status(403).json({ error: 'Session not active for marking' });
     }
 
-    // Location validation: wifi or beacon match
+    // Location validation: wifi or beacon match (beacons are optional)
     if (s.room_wifi && wifi_ssid && s.room_wifi !== wifi_ssid) {
       return res.status(403).json({ error: 'Wi‑Fi mismatch' });
     }
-    if (bluetooth_beacon_id && s.room_beacon && s.room_beacon !== bluetooth_beacon_id) {
+    
+    // Bluetooth beacon validation (optional - only validate if both room and student have beacons)
+    // Skip validation if student sends 'not_available' or null/undefined
+    if (s.room_beacon && bluetooth_beacon_id && bluetooth_beacon_id !== 'not_available' && s.room_beacon !== bluetooth_beacon_id) {
       return res.status(403).json({ error: 'Beacon mismatch' });
     }
+    
+    // If room has a beacon but student doesn't provide one, that's OK (beacons are optional)
+    // If student provides a beacon but room doesn't have one, that's OK (beacons are optional)
+    // Only fail if both have beacons and they don't match
 
     // Enforce one device per session and idempotency per student
     const rec = await db.query(

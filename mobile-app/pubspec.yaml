@@ -44,6 +44,13 @@ dependencies:
   pull_to_refresh: ^2.0.0
   intl: ^0.20.2
   json_annotation: ^4.9.0
+  
+  # Location and Network Services
+  connectivity_plus: ^7.0.0
+  network_info_plus: ^6.0.0
+  flutter_blue_plus: ^1.36.8
+  permission_handler: ^11.3.1
+  location: ^5.0.3
 
 dev_dependencies:
   flutter_test:
