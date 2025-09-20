@@ -10,9 +10,9 @@ const logger = require('./utils/logger');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// CORS middleware to allow requests from frontend
+// CORS middleware to allow requests from frontend and mobile app
 app.use(cors({
-  origin: 'http://localhost:5173', // Frontend URL
+  origin: ['http://localhost:5173', 'http://192.168.1.5:3001'], // Frontend URL and mobile app
   credentials: true
 }));
 
