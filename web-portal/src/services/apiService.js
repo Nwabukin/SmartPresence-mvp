@@ -1,6 +1,9 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'https://smartpresence-backend-u3kb.onrender.com/api'; // Fallback for deployed backend
 
+// Ensure API_BASE_URL always ends with /api
+const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+
 /**
  * Retrieves the JWT token from localStorage.
  * @returns {string|null} The JWT token or null if not found.
@@ -62,9 +65,10 @@ export const apiRequest = async (
   try {
     // Ensure proper URL construction by handling leading slashes
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    const url = `${API_BASE_URL}/${cleanEndpoint}`;
+    const url = `${BASE_URL}/${cleanEndpoint}`;
     console.log('🔍 Debug URL construction:');
     console.log('  - API_BASE_URL:', API_BASE_URL);
+    console.log('  - BASE_URL:', BASE_URL);
     console.log('  - endpoint:', endpoint);
     console.log('  - cleanEndpoint:', cleanEndpoint);
     console.log('  - final URL:', url);
