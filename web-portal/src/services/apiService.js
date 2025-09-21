@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'; // Fallback for local dev
+  import.meta.env.VITE_API_BASE_URL || 'https://smartpresence-backend-u3kb.onrender.com/api'; // Fallback for deployed backend
 
 /**
  * Retrieves the JWT token from localStorage.
