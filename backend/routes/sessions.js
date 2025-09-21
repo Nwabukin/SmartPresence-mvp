@@ -457,6 +457,7 @@ router.get(
          u.first_name AS student_first_name, 
          u.last_name AS student_last_name, 
          u.email AS student_email,
+         sp.matric_no AS student_matric_no,
          ar.marked_at, 
          ar.status, 
          ar.modified_by_teacher_id,
@@ -464,6 +465,7 @@ router.get(
          modifier.last_name AS modifier_last_name     -- Get modifier's name
        FROM attendance_records ar
        JOIN users u ON ar.student_id = u.user_id
+       LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
        LEFT JOIN users modifier ON ar.modified_by_teacher_id = modifier.user_id -- Left join for optional modifier
        WHERE ar.session_id = $1
        ORDER BY u.last_name, u.first_name`,

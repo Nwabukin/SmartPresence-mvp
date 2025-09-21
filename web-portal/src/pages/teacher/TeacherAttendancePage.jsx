@@ -356,7 +356,12 @@ function TeacherAttendancePage() {
                         {attendanceRecords.map((record) => (
                           <tr key={record.record_id}>
                             <td className="font-mono text-sm">{record.student_id}</td>
-                            <td className="font-medium">{record.student_name || 'N/A'}</td>
+                            <td className="font-medium">
+                              {record.student_first_name && record.student_last_name 
+                                ? `${record.student_first_name} ${record.student_last_name}`
+                                : 'N/A'
+                              }
+                            </td>
                             <td>
                               {record.student_matric_no ? (
                                 <span className="badge badge-info">{record.student_matric_no}</span>
@@ -365,7 +370,7 @@ function TeacherAttendancePage() {
                               )}
                             </td>
                             <td className="text-sm text-gray-600">
-                              {new Date(record.timestamp).toLocaleString()}
+                              {record.marked_at ? new Date(record.marked_at).toLocaleString() : 'Invalid Date'}
                             </td>
                             <td>{getStatusBadge(record.status)}</td>
                             <td>
