@@ -63,7 +63,11 @@ export const apiRequest = async (
     // Ensure proper URL construction by handling leading slashes
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
     const url = `${API_BASE_URL}/${cleanEndpoint}`;
-    console.log('🌐 Making API request to:', url);
+    console.log('🔍 Debug URL construction:');
+    console.log('  - API_BASE_URL:', API_BASE_URL);
+    console.log('  - endpoint:', endpoint);
+    console.log('  - cleanEndpoint:', cleanEndpoint);
+    console.log('  - final URL:', url);
     const response = await fetch(url, config);
 
     if (!response.ok) {
