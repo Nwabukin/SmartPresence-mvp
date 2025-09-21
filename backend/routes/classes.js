@@ -351,11 +351,13 @@ router.get('/:classId/students', authMiddleware, async (req, res) => {
     }
 
     // 2. Fetch enrolled students' details
-    // Joining enrollments with users table to get student names, emails etc.
+    // Joining enrollments with users table and student_profiles to get complete student information
     const enrolledStudentsResult = await db.query(
-      `SELECT u.user_id, u.email, u.first_name, u.last_name, e.enrollment_date 
+      `SELECT u.user_id, u.email, u.first_name, u.last_name, e.enrollment_date,
+              sp.matric_no, sp.department, sp.course, sp.level, sp.phone
        FROM enrollments e
        JOIN users u ON e.student_id = u.user_id
+       LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
        WHERE e.class_id = $1
        ORDER BY u.last_name, u.first_name`,
       [classIdInt]

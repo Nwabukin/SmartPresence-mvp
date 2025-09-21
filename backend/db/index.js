@@ -9,10 +9,10 @@ if (!process.env.DATABASE_URL) {
 // Configure the connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Optional: Add SSL configuration if connecting to a cloud database like Heroku Postgres
-  // ssl: {
-  //   rejectUnauthorized: false // Necessary for Heroku Hobby tier
-  // }
+  // SSL configuration for cloud databases like Render Postgres
+  ssl: {
+    rejectUnauthorized: false // Necessary for cloud database connections
+  }
 });
 
 // Optional: Log when a client connects (useful for debugging)

@@ -322,14 +322,14 @@ function TeacherEnrollmentPage() {
                             </td>
                             <td className="text-gray-600">{student.email}</td>
                             <td>
-                              {student.profile?.matric_no ? (
-                                <span className="badge badge-info">{student.profile.matric_no}</span>
+                              {student.matric_no ? (
+                                <span className="badge badge-info">{student.matric_no}</span>
                               ) : (
                                 <span className="text-gray-400">—</span>
                               )}
                             </td>
                             <td className="text-sm text-gray-600">
-                              {student.profile?.department || '—'}
+                              {student.department || '—'}
                             </td>
                             <td>
                               <button
