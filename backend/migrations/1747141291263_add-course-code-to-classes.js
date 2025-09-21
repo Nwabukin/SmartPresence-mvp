@@ -10,10 +10,10 @@ exports.shorthands = undefined;
  */
 exports.up = (pgm) => {
   pgm.addColumn('classes', {
-    course_code: { 
-      type: 'varchar(50)', 
-      notNull: true 
-    }
+    course_code: {
+      type: 'varchar(50)',
+      notNull: true,
+    },
   });
 };
 

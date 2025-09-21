@@ -16,4 +16,4 @@ module.exports = {
     'prettier/prettier': 'error', // Show Prettier errors as ESLint errors
     // Add any other custom ESLint rules here
   },
-}; 
+};

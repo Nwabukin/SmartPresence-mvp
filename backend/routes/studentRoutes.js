@@ -10,7 +10,9 @@ const { validate, schemas } = require('../utils/validation'); // Input validatio
 router.get('/classes', authMiddleware, async (req, res) => {
   // Ensure the user is a student
   if (req.user.role !== ROLES.STUDENT) {
-    return res.status(403).json({ error: 'Forbidden: This route is for students only.' });
+    return res
+      .status(403)
+      .json({ error: 'Forbidden: This route is for students only.' });
   }
 
   const studentId = req.user.id;
@@ -34,72 +36,108 @@ router.get('/classes', authMiddleware, async (req, res) => {
 
 // --- Mark Attendance for a Session ---
 // POST /api/students/attendance/mark
-router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark), async (req, res) => {
-  // Ensure the user is a student
-  if (req.user.role !== ROLES.STUDENT) {
-    return res.status(403).json({ error: 'Forbidden: This route is for students only.' });
-  }
-
-  const studentId = req.user.id;
-  const { class_id, session_id, wifi_ssid, bluetooth_beacon_id } = req.body;
-
-  try {
-    // 1. Verify student is enrolled in the class.
-    const enrollmentCheckQuery = 'SELECT 1 FROM student_enrollments WHERE student_id = $1 AND class_id = $2';
-    const enrollmentResult = await db.query(enrollmentCheckQuery, [studentId, class_id]);
-
-    if (enrollmentResult.rows.length === 0) {
-      return res.status(403).json({ error: 'Forbidden: You are not enrolled in this class.' });
+router.post(
+  '/attendance/mark',
+  authMiddleware,
+  validate(schemas.attendance.mark),
+  async (req, res) => {
+    // Ensure the user is a student
+    if (req.user.role !== ROLES.STUDENT) {
+      return res
+        .status(403)
+        .json({ error: 'Forbidden: This route is for students only.' });
     }
 
-    // 2. Verify session exists and is currently active (within time window).
-    const sessionQuery = 'SELECT room_id, start_time, end_time FROM sessions WHERE session_id = $1 AND class_id = $2';
-    const sessionResult = await db.query(sessionQuery, [session_id, class_id]);
+    const studentId = req.user.id;
+    const { class_id, session_id, wifi_ssid, bluetooth_beacon_id } = req.body;
 
-    if (sessionResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found for the given class or session ID is invalid.' });
-    }
+    try {
+      // 1. Verify student is enrolled in the class.
+      const enrollmentCheckQuery =
+        'SELECT 1 FROM student_enrollments WHERE student_id = $1 AND class_id = $2';
+      const enrollmentResult = await db.query(enrollmentCheckQuery, [
+        studentId,
+        class_id,
+      ]);
 
-    const session = sessionResult.rows[0];
-    const now = new Date();
-    const startTime = new Date(session.start_time);
-    const endTime = new Date(session.end_time);
+      if (enrollmentResult.rows.length === 0) {
+        return res
+          .status(403)
+          .json({ error: 'Forbidden: You are not enrolled in this class.' });
+      }
 
-    if (now < startTime) {
-      return res.status(400).json({ error: 'Attendance marking not yet open for this session.' });
-    }
-    if (now > endTime) {
-      return res.status(400).json({ error: 'Attendance marking period has ended for this session.' });
-    }
+      // 2. Verify session exists and is currently active (within time window).
+      const sessionQuery =
+        'SELECT room_id, start_time, end_time FROM sessions WHERE session_id = $1 AND class_id = $2';
+      const sessionResult = await db.query(sessionQuery, [
+        session_id,
+        class_id,
+      ]);
 
-    // Store room_id for the next step
-    const roomId = session.room_id;
+      if (sessionResult.rows.length === 0) {
+        return res
+          .status(404)
+          .json({
+            error:
+              'Session not found for the given class or session ID is invalid.',
+          });
+      }
 
-    // 3. Fetch room details for the session.
-    const roomQuery = 'SELECT wifi_ssid, bluetooth_beacon_id FROM rooms WHERE room_id = $1';
-    const roomResult = await db.query(roomQuery, [roomId]);
+      const session = sessionResult.rows[0];
+      const now = new Date();
+      const startTime = new Date(session.start_time);
+      const endTime = new Date(session.end_time);
 
-    if (roomResult.rows.length === 0) {
-      // This case should ideally not happen if roomId from session is valid
-      return res.status(500).json({ error: 'Internal server error: Room details not found for session.' });
-    }
-    const room = roomResult.rows[0];
+      if (now < startTime) {
+        return res
+          .status(400)
+          .json({ error: 'Attendance marking not yet open for this session.' });
+      }
+      if (now > endTime) {
+        return res
+          .status(400)
+          .json({
+            error: 'Attendance marking period has ended for this session.',
+          });
+      }
 
-    // 4. Compare submitted Wi-Fi SSID and Bluetooth Beacon ID.
-    // Strict check: submitted Wi-Fi must match room's Wi-Fi.
-    if (room.wifi_ssid !== wifi_ssid) {
-      return res.status(400).json({ error: 'Location mismatch: Wi-Fi SSID does not match session room.' });
-    }
+      // Store room_id for the next step
+      const roomId = session.room_id;
 
-    // Strict check for Bluetooth: if student provides a beacon ID, it must match the room's. 
-    // If room has a beacon ID and student doesn't provide one, it's a mismatch (implicit by current logic).
-    // If room does NOT have a beacon_id, but student provides one, it's also a mismatch.
-    // This also implies if bluetooth_beacon_id is null in DB and not provided by student, it passes this specific check.
-    if (room.bluetooth_beacon_id !== bluetooth_beacon_id) { 
-        // This comparison handles cases: 
+      // 3. Fetch room details for the session.
+      const roomQuery =
+        'SELECT wifi_ssid, bluetooth_beacon_id FROM rooms WHERE room_id = $1';
+      const roomResult = await db.query(roomQuery, [roomId]);
+
+      if (roomResult.rows.length === 0) {
+        // This case should ideally not happen if roomId from session is valid
+        return res
+          .status(500)
+          .json({
+            error: 'Internal server error: Room details not found for session.',
+          });
+      }
+      const room = roomResult.rows[0];
+
+      // 4. Compare submitted Wi-Fi SSID and Bluetooth Beacon ID.
+      // Strict check: submitted Wi-Fi must match room's Wi-Fi.
+      if (room.wifi_ssid !== wifi_ssid) {
+        return res
+          .status(400)
+          .json({
+            error: 'Location mismatch: Wi-Fi SSID does not match session room.',
+          });
+      }
+
+      // Strict check for Bluetooth: if student provides a beacon ID, it must match the room's.
+      // If room has a beacon ID and student doesn't provide one, it's a mismatch (implicit by current logic).
+      // If room does NOT have a beacon_id, but student provides one, it's also a mismatch.
+      // This also implies if bluetooth_beacon_id is null in DB and not provided by student, it passes this specific check.
+      if (room.bluetooth_beacon_id !== bluetooth_beacon_id) {
+        // This comparison handles cases:
         // room.beacon_id (e.g., 'B1') !== student_beacon_id (e.g., 'B2') -> FAIL
         // room.beacon_id (e.g., 'B1') !== student_beacon_id (undefined) -> FAIL (room.bluetooth_beacon_id will not be === undefined)
-        // room.beacon_id (null) !== student_beacon_id (e.g., 'B1') -> FAIL 
+        // room.beacon_id (null) !== student_beacon_id (e.g., 'B1') -> FAIL
         // Only passes if room.beacon_id === student_beacon_id (e.g. 'B1' === 'B1' OR null === undefined (which is false, so null === null is needed if we want to allow optional on both sides))
         // Let's refine this to be more explicit about optionality later if needed.
         // For now, if bluetooth_beacon_id is provided by student, it MUST match. If room has one, student MUST provide matching.
@@ -113,52 +151,71 @@ router.post('/attendance/mark', authMiddleware, validate(schemas.attendance.mark
 
         // If room expects a beacon and student provides a different one or none.
         if (roomBeacon && roomBeacon !== studentBeacon) {
-             return res.status(400).json({ error: 'Location mismatch: Bluetooth Beacon ID does not match session room.' });
+          return res
+            .status(400)
+            .json({
+              error:
+                'Location mismatch: Bluetooth Beacon ID does not match session room.',
+            });
         }
         // If student provides a beacon but room doesn't expect one (or expects a different one).
-        if (studentBeacon && roomBeacon !== studentBeacon) { // This condition is partially redundant with above but covers studentBeacon && !roomBeacon
-            return res.status(400).json({ error: 'Location mismatch: Bluetooth Beacon ID provided but not expected or does not match.' });
+        if (studentBeacon && roomBeacon !== studentBeacon) {
+          // This condition is partially redundant with above but covers studentBeacon && !roomBeacon
+          return res
+            .status(400)
+            .json({
+              error:
+                'Location mismatch: Bluetooth Beacon ID provided but not expected or does not match.',
+            });
         }
         // This logic ensures if one is set, the other must be set and match.
         // If both are null/undefined, this check is passed.
-    }
+      }
 
-    // 5. Prevent duplicate attendance for the same student in the same session.
-    const duplicateCheckQuery = 'SELECT 1 FROM attendance_records WHERE student_id = $1 AND session_id = $2';
-    const duplicateResult = await db.query(duplicateCheckQuery, [studentId, session_id]);
+      // 5. Prevent duplicate attendance for the same student in the same session.
+      const duplicateCheckQuery =
+        'SELECT 1 FROM attendance_records WHERE student_id = $1 AND session_id = $2';
+      const duplicateResult = await db.query(duplicateCheckQuery, [
+        studentId,
+        session_id,
+      ]);
 
-    if (duplicateResult.rows.length > 0) {
-      return res.status(409).json({ error: 'Conflict: Attendance already recorded for this session.' }); // 409 Conflict
-    }
+      if (duplicateResult.rows.length > 0) {
+        return res
+          .status(409)
+          .json({
+            error: 'Conflict: Attendance already recorded for this session.',
+          }); // 409 Conflict
+      }
 
-    // 6. Record attendance if all checks pass.
-    const attendanceStatus = 'present'; // Assuming 'present' as the default status upon successful marking
-    const recordedAt = new Date(); // Current timestamp
+      // 6. Record attendance if all checks pass.
+      const attendanceStatus = 'present'; // Assuming 'present' as the default status upon successful marking
+      const recordedAt = new Date(); // Current timestamp
 
-    const insertAttendanceQuery = `
+      const insertAttendanceQuery = `
       INSERT INTO attendance_records (student_id, session_id, status, recorded_at, verified_wifi_ssid, verified_bluetooth_beacon_id)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING attendance_record_id, student_id, session_id, status, recorded_at, verified_wifi_ssid, verified_bluetooth_beacon_id;
     `;
-    
-    const insertResult = await db.query(insertAttendanceQuery, [
-      studentId,
-      session_id,
-      attendanceStatus,
-      recordedAt,
-      wifi_ssid, // The student-submitted and verified Wi-Fi SSID
-      bluetooth_beacon_id // The student-submitted and verified Bluetooth Beacon ID (could be null)
-    ]);
 
-    res.status(201).json({
-      message: 'Attendance marked successfully.',
-      attendanceRecord: insertResult.rows[0]
-    });
+      const insertResult = await db.query(insertAttendanceQuery, [
+        studentId,
+        session_id,
+        attendanceStatus,
+        recordedAt,
+        wifi_ssid, // The student-submitted and verified Wi-Fi SSID
+        bluetooth_beacon_id, // The student-submitted and verified Bluetooth Beacon ID (could be null)
+      ]);
 
-  } catch (err) {
-    console.error('Error marking attendance:', err);
-    res.status(500).json({ error: 'Server error marking attendance.' });
+      res.status(201).json({
+        message: 'Attendance marked successfully.',
+        attendanceRecord: insertResult.rows[0],
+      });
+    } catch (err) {
+      console.error('Error marking attendance:', err);
+      res.status(500).json({ error: 'Server error marking attendance.' });
+    }
   }
-});
+);
 
-module.exports = router; 
+module.exports = router;

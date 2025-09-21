@@ -28,7 +28,7 @@ const formatLogMessage = (level, message, meta = {}) => {
     message,
     ...meta,
   };
-  
+
   return JSON.stringify(logEntry);
 };
 
@@ -42,30 +42,30 @@ const writeToFile = (filename, message) => {
 const consoleLog = (level, message, meta = {}) => {
   const colors = {
     error: '\x1b[31m', // Red
-    warn: '\x1b[33m',  // Yellow
-    info: '\x1b[36m',  // Cyan
+    warn: '\x1b[33m', // Yellow
+    info: '\x1b[36m', // Cyan
     debug: '\x1b[37m', // White
   };
-  
+
   const reset = '\x1b[0m';
   const color = colors[level] || '';
-  
+
   console.log(`${color}[${level.toUpperCase()}]${reset} ${message}`, meta);
 };
 
 // Main logger function
 const log = (level, message, meta = {}) => {
   const formattedMessage = formatLogMessage(level, message, meta);
-  
+
   // Always log to console
   consoleLog(level, message, meta);
-  
+
   // Log errors and warnings to file
   if (level === LOG_LEVELS.ERROR || level === LOG_LEVELS.WARN) {
     const filename = `${level}.log`;
     writeToFile(filename, formattedMessage);
   }
-  
+
   // Log all messages to combined log in development
   if (process.env.NODE_ENV === 'development') {
     writeToFile('combined.log', formattedMessage);
@@ -78,7 +78,7 @@ const logger = {
   warn: (message, meta = {}) => log(LOG_LEVELS.WARN, message, meta),
   info: (message, meta = {}) => log(LOG_LEVELS.INFO, message, meta),
   debug: (message, meta = {}) => log(LOG_LEVELS.DEBUG, message, meta),
-  
+
   // Specialized logging methods
   request: (req, res, responseTime) => {
     const meta = {
@@ -92,11 +92,11 @@ const logger = {
       userRole: req.user?.role || null,
       requestId: req.requestId || null,
     };
-    
+
     const level = res.statusCode >= 400 ? LOG_LEVELS.WARN : LOG_LEVELS.INFO;
     log(level, `${req.method} ${req.originalUrl} ${res.statusCode}`, meta);
   },
-  
+
   database: (operation, query, duration, error = null) => {
     const meta = {
       operation,
@@ -104,12 +104,14 @@ const logger = {
       duration: `${duration}ms`,
       error: error?.message || null,
     };
-    
+
     const level = error ? LOG_LEVELS.ERROR : LOG_LEVELS.DEBUG;
-    const message = error ? `Database error: ${operation}` : `Database operation: ${operation}`;
+    const message = error
+      ? `Database error: ${operation}`
+      : `Database operation: ${operation}`;
     log(level, message, meta);
   },
-  
+
   auth: (action, userId, success, error = null) => {
     const meta = {
       action,
@@ -117,9 +119,11 @@ const logger = {
       success,
       error: error?.message || null,
     };
-    
+
     const level = success ? LOG_LEVELS.INFO : LOG_LEVELS.WARN;
-    const message = success ? `Authentication success: ${action}` : `Authentication failed: ${action}`;
+    const message = success
+      ? `Authentication success: ${action}`
+      : `Authentication failed: ${action}`;
     log(level, message, meta);
   },
 };

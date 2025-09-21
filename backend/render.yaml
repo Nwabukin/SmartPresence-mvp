@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: smartpresence-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    # Database will be configured separately in Render dashboard
+    # DATABASE_URL will be automatically provided by Render Postgres

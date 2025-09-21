@@ -22,7 +22,9 @@ module.exports = function (req, res, next) {
   // Check if token is in the correct format 'Bearer <token>'
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    throw new AuthenticationError('Token is not valid (Format: Bearer <token>)');
+    throw new AuthenticationError(
+      'Token is not valid (Format: Bearer <token>)'
+    );
   }
 
   const token = parts[1];
@@ -41,4 +43,4 @@ module.exports = function (req, res, next) {
     console.error('Token verification failed:', err.message);
     throw new AuthenticationError('Token is not valid');
   }
-}; 
+};

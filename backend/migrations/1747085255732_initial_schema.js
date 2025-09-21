@@ -161,7 +161,7 @@ exports.up = (pgm) => {
     'attendance_records_session_student_unique',
     {
       unique: ['session_id', 'student_id'],
-    },
+    }
   );
 
   // Create indexes
@@ -184,7 +184,7 @@ exports.down = (pgm) => {
 
   pgm.dropConstraint(
     'attendance_records',
-    'attendance_records_session_student_unique',
+    'attendance_records_session_student_unique'
   );
   pgm.dropTable('attendance_records');
 
@@ -203,4 +203,4 @@ exports.down = (pgm) => {
   // Drop ENUM types
   pgm.dropType('attendance_status');
   pgm.dropType('user_role');
-}; 
+};

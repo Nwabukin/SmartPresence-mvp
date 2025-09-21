@@ -22,21 +22,32 @@ async function main() {
     const loginRes = await fetch(`${baseUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@example.com', password: 'changeme' }),
+      body: JSON.stringify({
+        email: 'admin@example.com',
+        password: 'changeme',
+      }),
     });
     const loginJson = await loginRes.json();
-    if (!loginRes.ok) throw new Error(`Login failed: ${JSON.stringify(loginJson)}`);
+    if (!loginRes.ok)
+      throw new Error(`Login failed: ${JSON.stringify(loginJson)}`);
     const token = (loginJson.data && loginJson.data.token) || loginJson.token;
     if (!token) throw new Error('No token returned from login');
-    const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+    const authHeaders = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
     console.log('✓ Login successful');
 
     // List users
     console.log('2. Testing GET /users...');
-    const usersRes = await fetch(`${baseUrl}/users`, { headers: { Authorization: `Bearer ${token}` } });
+    const usersRes = await fetch(`${baseUrl}/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const usersJson = await usersRes.json();
-    if (!usersRes.ok) throw new Error(`GET /users failed: ${JSON.stringify(usersJson)}`);
-    if (!Array.isArray(usersJson)) throw new Error('GET /users should return an array');
+    if (!usersRes.ok)
+      throw new Error(`GET /users failed: ${JSON.stringify(usersJson)}`);
+    if (!Array.isArray(usersJson))
+      throw new Error('GET /users should return an array');
     console.log(`✓ GET /users successful (${usersJson.length} users)`);
 
     // Create test student user
@@ -47,7 +58,12 @@ async function main() {
       firstName: 'Smoke',
       lastName: 'User',
       role: 'student',
-      profileStudent: { matricNo: `SMK${ts}`, department: 'QA', course: 'Testing', level: '100' },
+      profileStudent: {
+        matricNo: `SMK${ts}`,
+        department: 'QA',
+        course: 'Testing',
+        level: '100',
+      },
     };
     const createUserRes = await fetch(`${baseUrl}/users`, {
       method: 'POST',
@@ -55,7 +71,8 @@ async function main() {
       body: JSON.stringify(createUserBody),
     });
     const createUserJson = await createUserRes.json();
-    if (!createUserRes.ok) throw new Error(`Create user failed: ${JSON.stringify(createUserJson)}`);
+    if (!createUserRes.ok)
+      throw new Error(`Create user failed: ${JSON.stringify(createUserJson)}`);
     userId = createUserJson.user?.user_id || createUserJson.user_id;
     if (!userId) throw new Error('No user_id from create user');
     console.log(`✓ POST /users (student) successful (user_id: ${userId})`);
@@ -68,7 +85,12 @@ async function main() {
       firstName: 'Smoke',
       lastName: 'Teacher',
       role: 'teacher',
-      profileTeacher: { lecturerNo: `LEC${ts}`, department: 'Computer Science', faculty: 'Engineering', office: 'B-101' }
+      profileTeacher: {
+        lecturerNo: `LEC${ts}`,
+        department: 'Computer Science',
+        faculty: 'Engineering',
+        office: 'B-101',
+      },
     };
     const createTeacherRes = await fetch(`${baseUrl}/users`, {
       method: 'POST',
@@ -76,17 +98,20 @@ async function main() {
       body: JSON.stringify(createTeacherBody),
     });
     const createTeacherJson = await createTeacherRes.json();
-    if (!createTeacherRes.ok) throw new Error(`Create teacher failed: ${JSON.stringify(createTeacherJson)}`);
+    if (!createTeacherRes.ok)
+      throw new Error(
+        `Create teacher failed: ${JSON.stringify(createTeacherJson)}`
+      );
     teacherId = createTeacherJson.user?.user_id || createTeacherJson.user_id;
     if (!teacherId) throw new Error('No user_id from create teacher');
     console.log(`✓ POST /users (teacher) successful (user_id: ${teacherId})`);
 
     // Create test room
     console.log('5. Testing POST /rooms...');
-    const createRoomBody = { 
-      name: `Smoke Room ${ts}`, 
-      wifi_ssid: `Smoke_${ts}`, 
-      bluetooth_beacon_id: `BEACON_${ts}` 
+    const createRoomBody = {
+      name: `Smoke Room ${ts}`,
+      wifi_ssid: `Smoke_${ts}`,
+      bluetooth_beacon_id: `BEACON_${ts}`,
     };
     const createRoomRes = await fetch(`${baseUrl}/rooms`, {
       method: 'POST',
@@ -94,7 +119,8 @@ async function main() {
       body: JSON.stringify(createRoomBody),
     });
     const createRoomJson = await createRoomRes.json();
-    if (!createRoomRes.ok) throw new Error(`Create room failed: ${JSON.stringify(createRoomJson)}`);
+    if (!createRoomRes.ok)
+      throw new Error(`Create room failed: ${JSON.stringify(createRoomJson)}`);
     roomId = createRoomJson.room?.room_id || createRoomJson.room_id;
     if (!roomId) throw new Error('No room_id from create room');
     console.log(`✓ POST /rooms successful (room_id: ${roomId})`);
@@ -105,7 +131,8 @@ async function main() {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!deleteRoomRes.ok) throw new Error(`Delete room failed: ${deleteRoomRes.status}`);
+    if (!deleteRoomRes.ok)
+      throw new Error(`Delete room failed: ${deleteRoomRes.status}`);
     console.log('✓ DELETE /rooms successful');
 
     // Cleanup: Delete test user
@@ -114,7 +141,8 @@ async function main() {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!deleteUserRes.ok) throw new Error(`Delete user failed: ${deleteUserRes.status}`);
+    if (!deleteUserRes.ok)
+      throw new Error(`Delete user failed: ${deleteUserRes.status}`);
     console.log('✓ DELETE /users (student) successful');
 
     // Cleanup: Delete test teacher
@@ -123,19 +151,21 @@ async function main() {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!deleteTeacherRes.ok) throw new Error(`Delete teacher failed: ${deleteTeacherRes.status}`);
+    if (!deleteTeacherRes.ok)
+      throw new Error(`Delete teacher failed: ${deleteTeacherRes.status}`);
     console.log('✓ DELETE /users (teacher) successful');
 
     console.log('\n🎉 ALL SMOKE TESTS PASSED!');
     console.log('✅ Authentication working');
-    console.log('✅ User management CRUD working (student and teacher with faculty)');
+    console.log(
+      '✅ User management CRUD working (student and teacher with faculty)'
+    );
     console.log('✅ Room management CRUD working');
     console.log('✅ Error handling working');
     console.log('✅ Input validation working');
-
   } catch (error) {
     console.error('\n❌ SMOKE TESTS FAILED:', error.message);
-    
+
     // Cleanup on failure
     if (teacherId) {
       try {
@@ -164,7 +194,7 @@ async function main() {
         console.log('Cleaned up test room');
       } catch (e) {}
     }
-    
+
     process.exit(1);
   }
 }

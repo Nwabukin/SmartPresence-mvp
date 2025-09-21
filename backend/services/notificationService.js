@@ -1,6 +1,6 @@
 /**
  * Notification Service
- * 
+ *
  * Handles creation of notifications for various events in the SmartPresence system.
  * This service provides methods to create notifications for students when relevant
  * events occur (session creation, attendance marking, etc.).
@@ -21,16 +21,30 @@ class NotificationService {
    * @returns {Promise<Object>} Created notification
    */
   static async createNotification(notificationData) {
-    const { user_id, type, title, message, related_session_id, related_class_id } = notificationData;
-    
+    const {
+      user_id,
+      type,
+      title,
+      message,
+      related_session_id,
+      related_class_id,
+    } = notificationData;
+
     try {
       const result = await db.query(
         `INSERT INTO notifications (user_id, type, title, message, related_session_id, related_class_id)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING notification_id, user_id, type, title, message, is_read, related_session_id, related_class_id, created_at`,
-        [user_id, type, title, message, related_session_id || null, related_class_id || null]
+        [
+          user_id,
+          type,
+          title,
+          message,
+          related_session_id || null,
+          related_class_id || null,
+        ]
       );
-      
+
       return result.rows[0];
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -47,7 +61,13 @@ class NotificationService {
    * @param {number} [related_session_id] - Related session ID
    * @returns {Promise<Array>} Array of created notifications
    */
-  static async createNotificationsForClass(class_id, type, title, message, related_session_id = null) {
+  static async createNotificationsForClass(
+    class_id,
+    type,
+    title,
+    message,
+    related_session_id = null
+  ) {
     try {
       // Get all enrolled students for the class
       const enrolledStudents = await db.query(
@@ -68,7 +88,7 @@ class NotificationService {
           title,
           message,
           related_session_id,
-          related_class_id: class_id
+          related_class_id: class_id,
         });
         notifications.push(notification);
       }
@@ -88,10 +108,15 @@ class NotificationService {
    * @param {Date} start_time - Session start time
    * @returns {Promise<Array>} Array of created notifications
    */
-  static async createSessionReminderNotifications(session_id, class_id, class_name, start_time) {
+  static async createSessionReminderNotifications(
+    session_id,
+    class_id,
+    class_name,
+    start_time
+  ) {
     const title = 'Session Reminder';
     const message = `Your ${class_name} session is starting soon at ${new Date(start_time).toLocaleString()}. Don't forget to mark your attendance!`;
-    
+
     return await this.createNotificationsForClass(
       class_id,
       'session_reminder',
@@ -109,17 +134,22 @@ class NotificationService {
    * @param {string} class_name - Class name
    * @returns {Promise<Object>} Created notification
    */
-  static async createAttendanceConfirmationNotification(student_id, session_id, class_id, class_name) {
+  static async createAttendanceConfirmationNotification(
+    student_id,
+    session_id,
+    class_id,
+    class_name
+  ) {
     const title = 'Attendance Confirmed';
     const message = `Your attendance has been successfully marked for ${class_name}.`;
-    
+
     return await this.createNotification({
       user_id: student_id,
       type: 'attendance_confirmed',
       title,
       message,
       related_session_id: session_id,
-      related_class_id: class_id
+      related_class_id: class_id,
     });
   }
 
@@ -131,10 +161,15 @@ class NotificationService {
    * @param {Date} start_time - Original session start time
    * @returns {Promise<Array>} Array of created notifications
    */
-  static async createSessionCancelledNotifications(session_id, class_id, class_name, start_time) {
+  static async createSessionCancelledNotifications(
+    session_id,
+    class_id,
+    class_name,
+    start_time
+  ) {
     const title = 'Session Cancelled';
     const message = `Your ${class_name} session scheduled for ${new Date(start_time).toLocaleString()} has been cancelled.`;
-    
+
     return await this.createNotificationsForClass(
       class_id,
       'session_cancelled',
@@ -151,16 +186,20 @@ class NotificationService {
    * @param {string} class_name - Class name
    * @returns {Promise<Object>} Created notification
    */
-  static async createClassEnrollmentNotification(student_id, class_id, class_name) {
+  static async createClassEnrollmentNotification(
+    student_id,
+    class_id,
+    class_name
+  ) {
     const title = 'Class Enrollment';
     const message = `You have been enrolled in ${class_name}. Check your sessions and mark attendance when classes begin.`;
-    
+
     return await this.createNotification({
       user_id: student_id,
       type: 'class_enrolled',
       title,
       message,
-      related_class_id: class_id
+      related_class_id: class_id,
     });
   }
 }

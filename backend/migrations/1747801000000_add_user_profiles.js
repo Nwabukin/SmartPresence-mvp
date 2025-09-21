@@ -83,5 +83,3 @@ exports.down = (pgm) => {
   pgm.dropConstraint('student_profiles', 'student_profiles_user_unique');
   pgm.dropTable('student_profiles');
 };
-
-

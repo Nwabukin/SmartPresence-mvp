@@ -12,7 +12,9 @@ const commonPatterns = {
   optionalId: Joi.number().integer().positive().allow(null),
   timestamp: Joi.date().iso().required(),
   role: Joi.string().valid('admin', 'teacher', 'student').required(),
-  attendanceStatus: Joi.string().valid('present', 'absent', 'late', 'excused').required(),
+  attendanceStatus: Joi.string()
+    .valid('present', 'absent', 'late', 'excused')
+    .required(),
 };
 
 // User validation schemas
@@ -129,12 +131,18 @@ const sessionSchemas = {
     room_id: commonPatterns.id,
     start_time: commonPatterns.timestamp,
     end_time: commonPatterns.timestamp,
-  }).min(1).custom((value, helpers) => {
-    if (value.start_time && value.end_time && new Date(value.end_time) <= new Date(value.start_time)) {
-      return helpers.error('custom.endTimeAfterStartTime');
-    }
-    return value;
-  }),
+  })
+    .min(1)
+    .custom((value, helpers) => {
+      if (
+        value.start_time &&
+        value.end_time &&
+        new Date(value.end_time) <= new Date(value.start_time)
+      ) {
+        return helpers.error('custom.endTimeAfterStartTime');
+      }
+      return value;
+    }),
 
   getById: Joi.object({
     id: commonPatterns.id,
@@ -183,7 +191,7 @@ const notificationSchemas = {
     limit: Joi.number().integer().min(1).max(100).default(20),
     unread_only: Joi.boolean().default(false),
   }),
-  
+
   markRead: Joi.object({
     id: commonPatterns.id,
   }),
@@ -199,16 +207,18 @@ const validate = (schema, property = 'body') => {
     });
 
     if (error) {
-      const errorDetails = error.details.map(detail => ({
+      const errorDetails = error.details.map((detail) => ({
         field: detail.path.join('.'),
         message: detail.message,
         value: detail.context?.value,
       }));
 
       // Handle custom validation errors
-      const customErrors = error.details.filter(detail => detail.type === 'custom');
+      const customErrors = error.details.filter(
+        (detail) => detail.type === 'custom'
+      );
       if (customErrors.length > 0) {
-        customErrors.forEach(customError => {
+        customErrors.forEach((customError) => {
           if (customError.message === 'custom.endTimeAfterStartTime') {
             errorDetails.push({
               field: 'end_time',

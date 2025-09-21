@@ -13,6 +13,7 @@ This guide provides examples for testing the SmartPresence API using various too
 ### 1. Login to get JWT token
 
 **Using curl:**
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -23,10 +24,12 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 **Using Postman:**
+
 - Method: POST
 - URL: `http://localhost:3000/api/auth/login`
 - Headers: `Content-Type: application/json`
 - Body (raw JSON):
+
 ```json
 {
   "email": "admin@example.com",
@@ -35,6 +38,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -54,12 +58,14 @@ curl -X POST http://localhost:3000/api/auth/login \
 ### 2. Use token in subsequent requests
 
 **Using curl:**
+
 ```bash
 curl -X GET http://localhost:3000/api/users \
   -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
 ```
 
 **Using Postman:**
+
 - Add header: `Authorization: Bearer YOUR_JWT_TOKEN_HERE`
 
 ## User Management Testing
@@ -236,6 +242,7 @@ curl -X GET http://localhost:3000/api/users \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": false,
@@ -264,6 +271,7 @@ curl -X POST http://localhost:3000/api/users \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": false,
@@ -404,13 +412,11 @@ describe('API Tests', () => {
 
   beforeAll(async () => {
     // Login to get token
-    const response = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: 'admin@example.com',
-        password: 'admin123'
-      });
-    
+    const response = await request(app).post('/api/auth/login').send({
+      email: 'admin@example.com',
+      password: 'admin123',
+    });
+
     authToken = response.body.data.token;
   });
 
@@ -418,7 +424,7 @@ describe('API Tests', () => {
     const response = await request(app)
       .get('/api/users')
       .set('Authorization', `Bearer ${authToken}`);
-    
+
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
   });
@@ -434,15 +440,15 @@ describe('API Tests', () => {
         matricNo: 'STU001',
         department: 'CS',
         course: 'BSc CS',
-        level: '300'
-      }
+        level: '300',
+      },
     };
 
     const response = await request(app)
       .post('/api/users')
       .set('Authorization', `Bearer ${authToken}`)
       .send(userData);
-    
+
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     userId = response.body.data.user_id;
@@ -451,14 +457,14 @@ describe('API Tests', () => {
   test('PUT /api/users/:id should update a user', async () => {
     const updateData = {
       firstName: 'Updated',
-      lastName: 'Name'
+      lastName: 'Name',
     };
 
     const response = await request(app)
       .put(`/api/users/${userId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send(updateData);
-    
+
     expect(response.status).toBe(200);
     expect(response.body.data.first_name).toBe('Updated');
   });
@@ -467,7 +473,7 @@ describe('API Tests', () => {
     const response = await request(app)
       .delete(`/api/users/${userId}`)
       .set('Authorization', `Bearer ${authToken}`);
-    
+
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
   });
@@ -487,24 +493,24 @@ config:
     - duration: 60
       arrivalRate: 10
   variables:
-    token: "YOUR_JWT_TOKEN_HERE"
+    token: 'YOUR_JWT_TOKEN_HERE'
 
 scenarios:
-  - name: "API Load Test"
+  - name: 'API Load Test'
     weight: 100
     flow:
       - get:
-          url: "/api/users"
+          url: '/api/users'
           headers:
-            Authorization: "Bearer {{ token }}"
+            Authorization: 'Bearer {{ token }}'
       - post:
-          url: "/api/rooms"
+          url: '/api/rooms'
           headers:
-            Authorization: "Bearer {{ token }}"
-            Content-Type: "application/json"
+            Authorization: 'Bearer {{ token }}'
+            Content-Type: 'application/json'
           json:
-            name: "Test Room {{ $randomString() }}"
-            wifi_ssid: "Test_WiFi_{{ $randomString() }}"
+            name: 'Test Room {{ $randomString() }}'
+            wifi_ssid: 'Test_WiFi_{{ $randomString() }}'
 ```
 
 Run with: `artillery run artillery-config.yml`

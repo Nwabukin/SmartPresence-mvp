@@ -5,6 +5,7 @@ This document describes the comprehensive error handling system implemented in t
 ## Overview
 
 The error handling system provides:
+
 - Consistent error responses across all API endpoints
 - Proper HTTP status codes
 - Detailed error messages
@@ -14,36 +15,43 @@ The error handling system provides:
 ## Error Classes
 
 ### AppError (Base Class)
+
 - **Status Code**: Configurable
 - **Usage**: Base class for all custom errors
 - **Properties**: `statusCode`, `isOperational`, `status`
 
 ### ValidationError
+
 - **Status Code**: 400
 - **Usage**: Input validation failures
 - **Properties**: `details` (array of validation errors)
 
 ### AuthenticationError
+
 - **Status Code**: 401
 - **Usage**: Authentication failures (invalid/missing tokens)
 - **Default Message**: "Authentication failed"
 
 ### AuthorizationError
+
 - **Status Code**: 403
 - **Usage**: Authorization failures (insufficient permissions)
 - **Default Message**: "Access denied"
 
 ### NotFoundError
+
 - **Status Code**: 404
 - **Usage**: Resource not found
 - **Default Message**: "{Resource} not found"
 
 ### ConflictError
+
 - **Status Code**: 409
 - **Usage**: Resource conflicts (duplicate entries)
 - **Default Message**: "Resource already exists"
 
 ### DatabaseError
+
 - **Status Code**: 500
 - **Usage**: Database operation failures
 - **Default Message**: "Database operation failed"
@@ -91,11 +99,14 @@ if (user.role !== 'admin') {
 ```javascript
 const { asyncHandler } = require('../utils/errorHandler');
 
-router.get('/users', asyncHandler(async (req, res) => {
-  // Any thrown errors will be automatically caught and handled
-  const users = await db.query('SELECT * FROM users');
-  res.json(successResponse(users));
-}));
+router.get(
+  '/users',
+  asyncHandler(async (req, res) => {
+    // Any thrown errors will be automatically caught and handled
+    const users = await db.query('SELECT * FROM users');
+    res.json(successResponse(users));
+  })
+);
 ```
 
 ### Success Response Format
@@ -109,17 +120,20 @@ res.json(successResponse(data, 'Users retrieved successfully', 200));
 ## Error Logging
 
 ### Log Levels
+
 - **ERROR**: Server errors (5xx)
 - **WARN**: Client errors (4xx)
 - **INFO**: Successful operations
 - **DEBUG**: Detailed debugging information
 
 ### Log Files
+
 - `logs/error.log`: Error-level logs
 - `logs/warn.log`: Warning-level logs
 - `logs/combined.log`: All logs (development only)
 
 ### Log Format
+
 ```json
 {
   "timestamp": "2025-01-17T10:30:00.000Z",
@@ -140,6 +154,7 @@ res.json(successResponse(data, 'Users retrieved successfully', 200));
 ## Request Tracking
 
 Every request is assigned a unique ID for tracking:
+
 - **Header**: `X-Request-ID`
 - **Format**: `req_{timestamp}_{random}`
 - **Usage**: Error correlation and debugging
@@ -160,16 +175,19 @@ The system automatically handles common PostgreSQL errors:
 ## Middleware Integration
 
 ### Global Error Handler
+
 ```javascript
 app.use(globalErrorHandler); // Must be last
 ```
 
 ### Request ID Middleware
+
 ```javascript
 app.use(requestIdMiddleware);
 ```
 
 ### 404 Handler
+
 ```javascript
 app.use(notFoundHandler);
 ```
@@ -185,11 +203,13 @@ app.use(notFoundHandler);
 ## Environment-Specific Behavior
 
 ### Development
+
 - Stack traces included in error responses
 - All logs written to `combined.log`
 - Detailed error information
 
 ### Production
+
 - Stack traces hidden from responses
 - Only error/warn logs written to files
 - Sanitized error messages
@@ -197,6 +217,7 @@ app.use(notFoundHandler);
 ## Monitoring and Alerting
 
 The logging system is designed to integrate with monitoring services:
+
 - Structured JSON logs for easy parsing
 - Request IDs for correlation
 - Error categorization for alerting

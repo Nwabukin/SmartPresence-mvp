@@ -2,7 +2,7 @@
 
 /**
  * Migration: Add notifications table for student notifications
- * 
+ *
  * This migration adds the notifications table to support student notifications
  * including session reminders, attendance confirmations, session cancellations,
  * and class enrollment notifications.
@@ -19,12 +19,12 @@ const pool = new Pool({
 
 async function runMigration() {
   const client = await pool.connect();
-  
+
   try {
     console.log('Starting notifications table migration...');
-    
+
     await client.query('BEGIN');
-    
+
     // Create notifications table
     await client.query(`
       CREATE TABLE IF NOT EXISTS notifications (
@@ -40,28 +40,29 @@ async function runMigration() {
         read_at TIMESTAMP WITH TIME ZONE
       )
     `);
-    
+
     // Create indexes for performance
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)
     `);
-    
+
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type)
     `);
-    
+
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read)
     `);
-    
+
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at)
     `);
-    
+
     await client.query('COMMIT');
-    
-    console.log('✅ Migration completed: notifications table and indexes created');
-    
+
+    console.log(
+      '✅ Migration completed: notifications table and indexes created'
+    );
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Migration failed:', error.message);

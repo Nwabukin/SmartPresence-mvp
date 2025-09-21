@@ -6,4 +6,4 @@ module.exports = function (req, res, next) {
     throw new AuthorizationError('Access denied. Admin role required.');
   }
   next(); // User is an admin, proceed to the next middleware or route handler
-}; 
+};

@@ -1520,7 +1520,13 @@ components:
           type: integer
         type:
           type: string
-          enum: [session_reminder, attendance_confirmed, session_cancelled, class_enrolled]
+          enum:
+            [
+              session_reminder,
+              attendance_confirmed,
+              session_cancelled,
+              class_enrolled,
+            ]
         title:
           type: string
         message:

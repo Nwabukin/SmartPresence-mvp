@@ -7,7 +7,7 @@ class AppError extends Error {
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
-    
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -127,42 +127,58 @@ const globalErrorHandler = (error, req, res, next) => {
   // Handle different types of errors
   if (error.name === 'ValidationError') {
     // Joi validation errors
-    const details = error.details ? error.details.map(detail => ({
-      field: detail.path.join('.'),
-      message: detail.message,
-      value: detail.context?.value,
-    })) : [];
-    
+    const details = error.details
+      ? error.details.map((detail) => ({
+          field: detail.path.join('.'),
+          message: detail.message,
+          value: detail.context?.value,
+        }))
+      : [];
+
     const validationError = new ValidationError('Validation failed', details);
-    return res.status(validationError.statusCode).json(formatErrorResponse(validationError, req));
+    return res
+      .status(validationError.statusCode)
+      .json(formatErrorResponse(validationError, req));
   }
 
   if (error.name === 'JsonWebTokenError') {
     const authError = new AuthenticationError('Invalid token');
-    return res.status(authError.statusCode).json(formatErrorResponse(authError, req));
+    return res
+      .status(authError.statusCode)
+      .json(formatErrorResponse(authError, req));
   }
 
   if (error.name === 'TokenExpiredError') {
     const authError = new AuthenticationError('Token expired');
-    return res.status(authError.statusCode).json(formatErrorResponse(authError, req));
+    return res
+      .status(authError.statusCode)
+      .json(formatErrorResponse(authError, req));
   }
 
   if (error.code === '23505') {
     // PostgreSQL unique constraint violation
     const conflictError = new ConflictError('Resource already exists');
-    return res.status(conflictError.statusCode).json(formatErrorResponse(conflictError, req));
+    return res
+      .status(conflictError.statusCode)
+      .json(formatErrorResponse(conflictError, req));
   }
 
   if (error.code === '23503') {
     // PostgreSQL foreign key constraint violation
-    const conflictError = new ConflictError('Referenced resource does not exist');
-    return res.status(conflictError.statusCode).json(formatErrorResponse(conflictError, req));
+    const conflictError = new ConflictError(
+      'Referenced resource does not exist'
+    );
+    return res
+      .status(conflictError.statusCode)
+      .json(formatErrorResponse(conflictError, req));
   }
 
   if (error.code === '23502') {
     // PostgreSQL not null constraint violation
     const validationError = new ValidationError('Required field is missing');
-    return res.status(validationError.statusCode).json(formatErrorResponse(validationError, req));
+    return res
+      .status(validationError.statusCode)
+      .json(formatErrorResponse(validationError, req));
   }
 
   // Handle custom AppError instances
@@ -172,14 +188,16 @@ const globalErrorHandler = (error, req, res, next) => {
 
   // Handle unexpected errors
   const serverError = new AppError(
-    process.env.NODE_ENV === 'production' 
-      ? 'Something went wrong' 
+    process.env.NODE_ENV === 'production'
+      ? 'Something went wrong'
       : error.message,
     500,
     false
   );
 
-  return res.status(serverError.statusCode).json(formatErrorResponse(serverError, req));
+  return res
+    .status(serverError.statusCode)
+    .json(formatErrorResponse(serverError, req));
 };
 
 // Async error wrapper to catch async errors
@@ -191,7 +209,9 @@ const asyncHandler = (fn) => {
 
 // Request ID middleware for tracking
 const requestIdMiddleware = (req, res, next) => {
-  req.requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  req.requestId =
+    req.headers['x-request-id'] ||
+    `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   res.setHeader('X-Request-ID', req.requestId);
   next();
 };
@@ -215,7 +235,7 @@ const successResponse = (data, message = 'Success', statusCode = 200) => {
 // Pagination response formatter
 const paginatedResponse = (data, page, limit, total, message = 'Success') => {
   const totalPages = Math.ceil(total / limit);
-  
+
   return {
     success: true,
     message,
@@ -241,18 +261,18 @@ module.exports = {
   NotFoundError,
   ConflictError,
   DatabaseError,
-  
+
   // Middleware
   globalErrorHandler,
   asyncHandler,
   requestIdMiddleware,
   notFoundHandler,
-  
+
   // Response formatters
   successResponse,
   paginatedResponse,
   formatErrorResponse,
-  
+
   // Utilities
   logError,
 };

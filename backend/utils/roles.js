@@ -3,7 +3,7 @@
 const ROLES = {
   ADMIN: 'admin',
   TEACHER: 'teacher',
-  STUDENT: 'student'
+  STUDENT: 'student',
 };
 
-module.exports = ROLES; 
+module.exports = ROLES;

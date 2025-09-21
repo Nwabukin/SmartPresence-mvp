@@ -14,18 +14,21 @@ if (!JWT_SECRET) {
   process.exit(1); // Exit if secret is not set
 }
 
-// --- Registration --- 
+// --- Registration ---
 // POST /api/auth/register
 // router.post('/register', async (req, res) => { ... }); // REMOVED - User creation now handled by POST /api/users (Admin only)
 
-// --- Login --- 
+// --- Login ---
 // POST /api/auth/login
 router.post('/login', validate(schemas.auth.login), async (req, res) => {
   const { email, password } = req.body;
 
   try {
     // Find user by email
-    const result = await db.query('SELECT user_id, email, password_hash, role, first_name, last_name FROM users WHERE email = $1', [email]);
+    const result = await db.query(
+      'SELECT user_id, email, password_hash, role, first_name, last_name FROM users WHERE email = $1',
+      [email]
+    );
     const user = result.rows[0];
 
     if (!user) {
@@ -34,7 +37,9 @@ router.post('/login', validate(schemas.auth.login), async (req, res) => {
 
     // Block student role on web login: students must use mobile app login
     if (user.role === 'student') {
-      return res.status(403).json({ error: 'Students must use the mobile app to log in.' });
+      return res
+        .status(403)
+        .json({ error: 'Students must use the mobile app to log in.' });
     }
 
     // Compare submitted password with stored hash
@@ -44,7 +49,7 @@ router.post('/login', validate(schemas.auth.login), async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials.' }); // Password incorrect
     }
 
-    // --- Generate JWT --- 
+    // --- Generate JWT ---
     const payload = {
       user: {
         id: user.user_id,
@@ -60,23 +65,23 @@ router.post('/login', validate(schemas.auth.login), async (req, res) => {
       { expiresIn: '1h' }, // Token expires in 1 hour (adjust as needed)
       (err, token) => {
         if (err) throw err;
-        res.json({ 
-          token, 
-          user: { // Send back some user info 
+        res.json({
+          token,
+          user: {
+            // Send back some user info
             id: user.user_id,
             email: user.email,
             role: user.role,
             firstName: user.first_name,
             lastName: user.last_name,
-          } 
+          },
         });
       }
     );
-
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error during login.' });
   }
 });
 
-module.exports = router; 
+module.exports = router;

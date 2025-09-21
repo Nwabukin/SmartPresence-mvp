@@ -17,11 +17,13 @@ Authorization: Bearer <your-jwt-token>
 ```
 
 ### Login
+
 **POST** `/auth/login`
 
 Authenticate a user and receive a JWT token.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -30,6 +32,7 @@ Authenticate a user and receive a JWT token.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -47,18 +50,22 @@ Authenticate a user and receive a JWT token.
 ```
 
 **Error Responses:**
+
 - `400`: Validation error
 - `401`: Invalid credentials
 
 ## User Management
+
 ## Mobile (Students)
 
 Students authenticate via matric number on the mobile app. Web login is blocked for student role.
 
 ### Student Login (Mobile)
+
 **POST** `/mobile/students/login`
 
 Request Body:
+
 ```json
 {
   "matricNo": "STU001",
@@ -67,46 +74,66 @@ Request Body:
 ```
 
 Response (200):
+
 ```json
 {
   "token": "<jwt>",
-  "user": { "id": 12, "email": "student@example.com", "role": "student", "firstName": "John", "lastName": "Doe" }
+  "user": {
+    "id": 12,
+    "email": "student@example.com",
+    "role": "student",
+    "firstName": "John",
+    "lastName": "Doe"
+  }
 }
 ```
 
 ### Get My Profile (Mobile)
+
 **GET** `/mobile/me`
 
 Response (200):
+
 ```json
 {
   "user_id": 12,
   "email": "student@example.com",
   "first_name": "John",
   "last_name": "Doe",
-  "profile": { "matric_no": "STU001", "department": "CS", "course": "BSc CS", "level": "300", "phone": "+123" }
+  "profile": {
+    "matric_no": "STU001",
+    "department": "CS",
+    "course": "BSc CS",
+    "level": "300",
+    "phone": "+123"
+  }
 }
 ```
 
 ### Get My Classes (Mobile)
+
 **GET** `/mobile/me/classes`
 
 Returns array of classes the student is enrolled in.
 
 ### Get My Sessions (Mobile)
+
 **GET** `/mobile/me/sessions?from=&to=`
 
 Returns sessions for enrolled classes, optionally filtered by time.
 
 ### Get My Attendance (Mobile)
+
 **GET** `/mobile/me/attendance`
 
 Returns attendance history.
 
 ### Mark Attendance (Mobile)
+
 **POST** `/mobile/attendance/mark`
 
 Request Body:
+
 ```json
 {
   "class_id": 10,
@@ -118,19 +145,23 @@ Request Body:
 ```
 
 Responses:
+
 - 201: attendance record
 - 403: not enrolled / outside session window / location mismatch
 - 409: already marked (idempotent upsert returns updated) / device already used in session
 
 ### Get My Notifications (Mobile)
+
 **GET** `/mobile/me/notifications?page=1&limit=20&unread_only=false`
 
 Query Parameters:
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 20, max: 100)
 - `unread_only` (optional): Filter unread notifications only (default: false)
 
 Response (200):
+
 ```json
 {
   "notifications": [
@@ -160,9 +191,11 @@ Response (200):
 ```
 
 ### Get Unread Notification Count (Mobile)
+
 **GET** `/mobile/me/notifications/unread-count`
 
 Response (200):
+
 ```json
 {
   "unread_count": 3
@@ -170,9 +203,11 @@ Response (200):
 ```
 
 ### Mark Notification as Read (Mobile)
+
 **PUT** `/mobile/notifications/:id/read`
 
 Response (200):
+
 ```json
 {
   "notification_id": 1,
@@ -182,9 +217,11 @@ Response (200):
 ```
 
 ### Mark All Notifications as Read (Mobile)
+
 **PUT** `/mobile/notifications/mark-all-read`
 
 Response (200):
+
 ```json
 {
   "message": "Marked 3 notifications as read",
@@ -201,18 +238,20 @@ The system supports the following notification types:
 - **session_cancelled**: Created when a session is cancelled
 - **class_enrolled**: Created when a student is enrolled in a class
 
-
 ### Get All Users
+
 **GET** `/users`
 
 Retrieve all users (Admin/Teacher only).
 
 **Headers:**
+
 ```
 Authorization: Bearer <token>
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -263,14 +302,17 @@ Authorization: Bearer <token>
 ```
 
 ### Get User by ID
+
 **GET** `/users/:id`
 
 Retrieve a specific user by ID.
 
 **Parameters:**
+
 - `id` (integer, required): User ID
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -295,11 +337,13 @@ Retrieve a specific user by ID.
 ```
 
 ### Create User
+
 **POST** `/users`
 
 Create a new user (Admin only).
 
 **Request Body (Student):**
+
 ```json
 {
   "email": "newstudent@example.com",
@@ -318,6 +362,7 @@ Create a new user (Admin only).
 ```
 
 **Request Body (Teacher):**
+
 ```json
 {
   "email": "newteacher@example.com",
@@ -336,6 +381,7 @@ Create a new user (Admin only).
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -360,14 +406,17 @@ Create a new user (Admin only).
 ```
 
 ### Update User
+
 **PUT** `/users/:id`
 
 Update an existing user.
 
 **Parameters:**
+
 - `id` (integer, required): User ID
 
 **Request Body:**
+
 ```json
 {
   "firstName": "Jane Updated",
@@ -382,6 +431,7 @@ Update an existing user.
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -406,14 +456,17 @@ Update an existing user.
 ```
 
 ### Delete User
+
 **DELETE** `/users/:id`
 
 Delete a user (Admin only).
 
 **Parameters:**
+
 - `id` (integer, required): User ID
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -426,11 +479,13 @@ Delete a user (Admin only).
 ## Room Management
 
 ### Get All Rooms
+
 **GET** `/rooms`
 
 Retrieve all rooms (Admin only).
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -449,11 +504,13 @@ Retrieve all rooms (Admin only).
 ```
 
 ### Create Room
+
 **POST** `/rooms`
 
 Create a new room (Admin only).
 
 **Request Body:**
+
 ```json
 {
   "name": "Computer Lab 1",
@@ -463,6 +520,7 @@ Create a new room (Admin only).
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -479,14 +537,17 @@ Create a new room (Admin only).
 ```
 
 ### Update Room
+
 **PUT** `/rooms/:id`
 
 Update an existing room (Admin only).
 
 **Parameters:**
+
 - `id` (integer, required): Room ID
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Computer Lab 1",
@@ -495,21 +556,25 @@ Update an existing room (Admin only).
 ```
 
 ### Delete Room
+
 **DELETE** `/rooms/:id`
 
 Delete a room (Admin only).
 
 **Parameters:**
+
 - `id` (integer, required): Room ID
 
 ## Class Management
 
 ### Get All Classes
+
 **GET** `/classes`
 
 Retrieve all classes.
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -529,11 +594,13 @@ Retrieve all classes.
 ```
 
 ### Create Class
+
 **POST** `/classes`
 
 Create a new class.
 
 **Request Body:**
+
 ```json
 {
   "name": "Data Structures",
@@ -543,29 +610,35 @@ Create a new class.
 ```
 
 ### Update Class
+
 **PUT** `/classes/:id`
 
 Update an existing class.
 
 **Parameters:**
+
 - `id` (integer, required): Class ID
 
 ### Delete Class
+
 **DELETE** `/classes/:id`
 
 Delete a class.
 
 **Parameters:**
+
 - `id` (integer, required): Class ID
 
 ## Session Management
 
 ### Get All Sessions
+
 **GET** `/sessions`
 
 Retrieve all sessions.
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -585,11 +658,13 @@ Retrieve all sessions.
 ```
 
 ### Create Session
+
 **POST** `/sessions`
 
 Create a new session.
 
 **Request Body:**
+
 ```json
 {
   "class_id": 1,
@@ -600,14 +675,17 @@ Create a new session.
 ```
 
 ### Get Session Attendance
+
 **GET** `/sessions/:sessionId/attendance`
 
 Get attendance records for a specific session.
 
 **Parameters:**
+
 - `sessionId` (integer, required): Session ID
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -628,11 +706,13 @@ Get attendance records for a specific session.
 ## Attendance Management
 
 ### Mark Attendance
+
 **POST** `/students/attendance/mark`
 
 Mark attendance for a student.
 
 **Request Body:**
+
 ```json
 {
   "class_id": 1,
@@ -643,6 +723,7 @@ Mark attendance for a student.
 ```
 
 **Response (201):**
+
 ```json
 {
   "success": true,
@@ -659,14 +740,17 @@ Mark attendance for a student.
 ```
 
 ### Update Attendance
+
 **PUT** `/attendance/:recordId`
 
 Update attendance record (Admin/Teacher only).
 
 **Parameters:**
+
 - `recordId` (integer, required): Attendance record ID
 
 **Request Body:**
+
 ```json
 {
   "status": "late"

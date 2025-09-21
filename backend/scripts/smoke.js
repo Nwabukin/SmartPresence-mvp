@@ -18,16 +18,26 @@ async function main() {
     body: JSON.stringify({ email: 'admin@example.com', password: 'changeme' }),
   });
   const loginJson = await loginRes.json();
-  if (!loginRes.ok) throw new Error(`Login failed: ${JSON.stringify(loginJson)}`);
+  if (!loginRes.ok)
+    throw new Error(`Login failed: ${JSON.stringify(loginJson)}`);
   const token = (loginJson.data && loginJson.data.token) || loginJson.token;
   if (!token) throw new Error('No token returned from login');
-  const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const authHeaders = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
 
   // List users
-  const usersRes = await fetch(`${baseUrl}/users`, { headers: { Authorization: `Bearer ${token}` } });
+  const usersRes = await fetch(`${baseUrl}/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   const usersJson = await usersRes.json();
-  if (!usersRes.ok) throw new Error(`GET /users failed: ${JSON.stringify(usersJson)}`);
-  console.log('users_count', Array.isArray(usersJson) ? usersJson.length : usersJson);
+  if (!usersRes.ok)
+    throw new Error(`GET /users failed: ${JSON.stringify(usersJson)}`);
+  console.log(
+    'users_count',
+    Array.isArray(usersJson) ? usersJson.length : usersJson
+  );
 
   // Create test user
   const createUserBody = {
@@ -36,7 +46,12 @@ async function main() {
     firstName: 'Smoke',
     lastName: 'User',
     role: 'student',
-    profileStudent: { matricNo: `SMK${ts}`, department: 'QA', course: 'Testing', level: '100' },
+    profileStudent: {
+      matricNo: `SMK${ts}`,
+      department: 'QA',
+      course: 'Testing',
+      level: '100',
+    },
   };
   const createUserRes = await fetch(`${baseUrl}/users`, {
     method: 'POST',
@@ -44,9 +59,13 @@ async function main() {
     body: JSON.stringify(createUserBody),
   });
   const createUserJson = await createUserRes.json();
-  if (!createUserRes.ok) throw new Error(`Create user failed: ${JSON.stringify(createUserJson)}`);
+  if (!createUserRes.ok)
+    throw new Error(`Create user failed: ${JSON.stringify(createUserJson)}`);
   // console.log('Create user response:', JSON.stringify(createUserJson, null, 2));
-  const userId = createUserJson.user?.user_id || createUserJson.user_id || (createUserJson.data && createUserJson.data.user_id);
+  const userId =
+    createUserJson.user?.user_id ||
+    createUserJson.user_id ||
+    (createUserJson.data && createUserJson.data.user_id);
   if (!userId) throw new Error('No user_id from create user');
   console.log('created_user_id', userId);
 
@@ -63,7 +82,8 @@ async function main() {
     body: JSON.stringify(updateUserBody),
   });
   const updateUserJson = await updateUserRes.json();
-  if (!updateUserRes.ok) throw new Error(`Update user failed: ${JSON.stringify(updateUserJson)}`);
+  if (!updateUserRes.ok)
+    throw new Error(`Update user failed: ${JSON.stringify(updateUserJson)}`);
   console.log('updated_user_ok');
 
   // Delete user
@@ -71,19 +91,28 @@ async function main() {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!deleteUserRes.ok) throw new Error(`Delete user failed: ${deleteUserRes.status}`);
+  if (!deleteUserRes.ok)
+    throw new Error(`Delete user failed: ${deleteUserRes.status}`);
   console.log('deleted_user_ok');
 
   // Create test room
-  const createRoomBody = { name: `Smoke Room ${ts}`, wifi_ssid: `Smoke_${ts}`, bluetooth_beacon_id: `BEACON_${ts}` };
+  const createRoomBody = {
+    name: `Smoke Room ${ts}`,
+    wifi_ssid: `Smoke_${ts}`,
+    bluetooth_beacon_id: `BEACON_${ts}`,
+  };
   const createRoomRes = await fetch(`${baseUrl}/rooms`, {
     method: 'POST',
     headers: authHeaders,
     body: JSON.stringify(createRoomBody),
   });
   const createRoomJson = await createRoomRes.json();
-  if (!createRoomRes.ok) throw new Error(`Create room failed: ${JSON.stringify(createRoomJson)}`);
-  const roomId = createRoomJson.room?.room_id || createRoomJson.room_id || (createRoomJson.data && createRoomJson.data.room_id);
+  if (!createRoomRes.ok)
+    throw new Error(`Create room failed: ${JSON.stringify(createRoomJson)}`);
+  const roomId =
+    createRoomJson.room?.room_id ||
+    createRoomJson.room_id ||
+    (createRoomJson.data && createRoomJson.data.room_id);
   if (!roomId) throw new Error('No room_id from create room');
   console.log('created_room_id', roomId);
 
@@ -92,7 +121,8 @@ async function main() {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!deleteRoomRes.ok) throw new Error(`Delete room failed: ${deleteRoomRes.status}`);
+  if (!deleteRoomRes.ok)
+    throw new Error(`Delete room failed: ${deleteRoomRes.status}`);
   console.log('deleted_room_ok');
 
   console.log('SMOKE_TESTS_PASSED');
@@ -102,5 +132,3 @@ main().catch((err) => {
   console.error('SMOKE_TESTS_FAILED', err.message);
   process.exit(1);
 });
-
-

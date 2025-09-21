@@ -11,8 +11,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // SSL configuration for cloud databases like Render Postgres
   ssl: {
-    rejectUnauthorized: false // Necessary for cloud database connections
-  }
+    rejectUnauthorized: false, // Necessary for cloud database connections
+  },
 });
 
 // Optional: Log when a client connects (useful for debugging)

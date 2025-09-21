@@ -12,7 +12,10 @@ async function canManageSession(userId, userRole, classId) {
     return false; // Only teachers can manage sessions
   }
   // Check if the teacher owns the class
-  const classResult = await db.query('SELECT teacher_id FROM classes WHERE class_id = $1', [classId]);
+  const classResult = await db.query(
+    'SELECT teacher_id FROM classes WHERE class_id = $1',
+    [classId]
+  );
   if (classResult.rows.length === 0) {
     return false; // Class not found
   }
@@ -21,53 +24,76 @@ async function canManageSession(userId, userRole, classId) {
 
 // --- Create a new Session (Teacher Only) ---
 // POST /api/sessions
-router.post('/', authMiddleware, validate(schemas.session.create), async (req, res) => {
-  const { class_id, room_id, start_time, end_time } = req.body;
-  const requestingUserId = req.user.id;
-  const requestingUserRole = req.user.role;
+router.post(
+  '/',
+  authMiddleware,
+  validate(schemas.session.create),
+  async (req, res) => {
+    const { class_id, room_id, start_time, end_time } = req.body;
+    const requestingUserId = req.user.id;
+    const requestingUserRole = req.user.role;
 
-  try {
-    const canCreate = await canManageSession(requestingUserId, requestingUserRole, class_id);
-    if (!canCreate) {
-      return res.status(403).json({ error: 'Forbidden: Only teachers can create sessions for their own classes.' });
-    }
-    
-    // Verify room exists
-    const roomExists = await db.query('SELECT 1 FROM rooms WHERE room_id = $1', [room_id]);
-    if (roomExists.rows.length === 0) {
-        return res.status(404).json({ error: 'Room not found.'});
-    }
-
-    const result = await db.query(
-      'INSERT INTO sessions (class_id, room_id, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING *',
-      [class_id, room_id, start_time, end_time]
-    );
-    
-    const newSession = result.rows[0];
-    
-    // Create session reminder notifications for enrolled students
     try {
-      // Get class name for notification
-      const classResult = await db.query('SELECT name FROM classes WHERE class_id = $1', [class_id]);
-      const class_name = classResult.rows[0]?.name || 'Unknown Class';
-      
-      await NotificationService.createSessionReminderNotifications(
-        newSession.session_id,
-        class_id,
-        class_name,
-        newSession.start_time
+      const canCreate = await canManageSession(
+        requestingUserId,
+        requestingUserRole,
+        class_id
       );
-    } catch (notificationError) {
-      console.error('Error creating session reminder notifications:', notificationError);
-      // Don't fail the session creation if notifications fail
+      if (!canCreate) {
+        return res
+          .status(403)
+          .json({
+            error:
+              'Forbidden: Only teachers can create sessions for their own classes.',
+          });
+      }
+
+      // Verify room exists
+      const roomExists = await db.query(
+        'SELECT 1 FROM rooms WHERE room_id = $1',
+        [room_id]
+      );
+      if (roomExists.rows.length === 0) {
+        return res.status(404).json({ error: 'Room not found.' });
+      }
+
+      const result = await db.query(
+        'INSERT INTO sessions (class_id, room_id, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING *',
+        [class_id, room_id, start_time, end_time]
+      );
+
+      const newSession = result.rows[0];
+
+      // Create session reminder notifications for enrolled students
+      try {
+        // Get class name for notification
+        const classResult = await db.query(
+          'SELECT name FROM classes WHERE class_id = $1',
+          [class_id]
+        );
+        const class_name = classResult.rows[0]?.name || 'Unknown Class';
+
+        await NotificationService.createSessionReminderNotifications(
+          newSession.session_id,
+          class_id,
+          class_name,
+          newSession.start_time
+        );
+      } catch (notificationError) {
+        console.error(
+          'Error creating session reminder notifications:',
+          notificationError
+        );
+        // Don't fail the session creation if notifications fail
+      }
+
+      res.status(201).json(newSession);
+    } catch (err) {
+      console.error('Error creating session:', err);
+      res.status(500).json({ error: 'Server error creating session.' });
     }
-    
-    res.status(201).json(newSession);
-  } catch (err) {
-    console.error('Error creating session:', err);
-    res.status(500).json({ error: 'Server error creating session.' });
   }
-});
+);
 
 // --- Get all Sessions (Admin can view all, Teacher for their classes) ---
 // GET /api/sessions
@@ -77,8 +103,7 @@ router.get('/', authMiddleware, async (req, res) => {
   const { class_id: queryClassId, teacher_id: queryTeacherId } = req.query;
 
   try {
-    let query = 
-      `SELECT s.*, c.name as class_name, c.course_code, r.name as room_name 
+    let query = `SELECT s.*, c.name as class_name, c.course_code, r.name as room_name 
        FROM sessions s 
        JOIN classes c ON s.class_id = c.class_id 
        JOIN rooms r ON s.room_id = r.room_id`;
@@ -91,17 +116,24 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 
     if (queryClassId) {
-        const classIdInt = parseInt(queryClassId, 10);
-        if (isNaN(classIdInt)) return res.status(400).json({ error: 'Invalid class_id format in query.'});
-        conditions.push(`s.class_id = $${params.length + 1}`);
-        params.push(classIdInt);
+      const classIdInt = parseInt(queryClassId, 10);
+      if (isNaN(classIdInt))
+        return res
+          .status(400)
+          .json({ error: 'Invalid class_id format in query.' });
+      conditions.push(`s.class_id = $${params.length + 1}`);
+      params.push(classIdInt);
     }
-    
-    if (queryTeacherId && requestingUserRole === ROLES.ADMIN) { // Teacher can only see their own, admin can filter by teacher
-        const teacherIdInt = parseInt(queryTeacherId, 10);
-        if (isNaN(teacherIdInt)) return res.status(400).json({ error: 'Invalid teacher_id format in query.'});
-        conditions.push(`c.teacher_id = $${params.length + 1}`);
-        params.push(teacherIdInt);
+
+    if (queryTeacherId && requestingUserRole === ROLES.ADMIN) {
+      // Teacher can only see their own, admin can filter by teacher
+      const teacherIdInt = parseInt(queryTeacherId, 10);
+      if (isNaN(teacherIdInt))
+        return res
+          .status(400)
+          .json({ error: 'Invalid teacher_id format in query.' });
+      conditions.push(`c.teacher_id = $${params.length + 1}`);
+      params.push(teacherIdInt);
     }
 
     if (conditions.length > 0) {
@@ -119,199 +151,306 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // --- Get a specific Session by ID (Admin can view all, Teacher who owns class) ---
 // GET /api/sessions/:sessionId
-router.get('/:sessionId', authMiddleware, validate(schemas.session.getById, 'params'), async (req, res) => {
-  const { sessionId } = req.params;
-  const sessionIdInt = parseInt(sessionId, 10);
-  const requestingUserId = req.user.id;
-  const requestingUserRole = req.user.role;
+router.get(
+  '/:sessionId',
+  authMiddleware,
+  validate(schemas.session.getById, 'params'),
+  async (req, res) => {
+    const { sessionId } = req.params;
+    const sessionIdInt = parseInt(sessionId, 10);
+    const requestingUserId = req.user.id;
+    const requestingUserRole = req.user.role;
 
-  if (isNaN(sessionIdInt)) {
-    return res.status(400).json({ error: 'Invalid session ID format.' });
-  }
+    if (isNaN(sessionIdInt)) {
+      return res.status(400).json({ error: 'Invalid session ID format.' });
+    }
 
-  try {
-    const result = await db.query(
+    try {
+      const result = await db.query(
         `SELECT s.*, c.name as class_name, c.course_code, r.name as room_name 
          FROM sessions s 
          JOIN classes c ON s.class_id = c.class_id 
          JOIN rooms r ON s.room_id = r.room_id 
          WHERE s.session_id = $1`,
         [sessionIdInt]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found.' });
-    }
-    const session = result.rows[0];
-    // Admin can view all sessions, teachers can only view their own
-    if (requestingUserRole === ROLES.ADMIN) {
-      // Admin can view any session
-    } else {
-      const canView = await canManageSession(requestingUserId, requestingUserRole, session.class_id);
-      if (!canView) {
-        return res.status(403).json({ error: 'Forbidden: You do not have permission to view this session.' });
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Session not found.' });
       }
+      const session = result.rows[0];
+      // Admin can view all sessions, teachers can only view their own
+      if (requestingUserRole === ROLES.ADMIN) {
+        // Admin can view any session
+      } else {
+        const canView = await canManageSession(
+          requestingUserId,
+          requestingUserRole,
+          session.class_id
+        );
+        if (!canView) {
+          return res
+            .status(403)
+            .json({
+              error:
+                'Forbidden: You do not have permission to view this session.',
+            });
+        }
+      }
+      res.json(session);
+    } catch (err) {
+      console.error(`Error fetching session ${sessionIdInt}:`, err);
+      res.status(500).json({ error: 'Server error fetching session.' });
     }
-    res.json(session);
-  } catch (err) {
-    console.error(`Error fetching session ${sessionIdInt}:`, err);
-    res.status(500).json({ error: 'Server error fetching session.' });
   }
-});
+);
 
 // --- Update a Session by ID (Teacher who owns class only) ---
 // PUT /api/sessions/:sessionId
-router.put('/:sessionId', authMiddleware, validate(schemas.session.getById, 'params'), validate(schemas.session.update), async (req, res) => {
-  const { sessionId } = req.params;
-  const sessionIdInt = parseInt(sessionId, 10);
-  const { room_id, start_time, end_time } = req.body;
-  const requestingUserId = req.user.id;
-  const requestingUserRole = req.user.role;
+router.put(
+  '/:sessionId',
+  authMiddleware,
+  validate(schemas.session.getById, 'params'),
+  validate(schemas.session.update),
+  async (req, res) => {
+    const { sessionId } = req.params;
+    const sessionIdInt = parseInt(sessionId, 10);
+    const { room_id, start_time, end_time } = req.body;
+    const requestingUserId = req.user.id;
+    const requestingUserRole = req.user.role;
 
-  if (isNaN(sessionIdInt)) {
-    return res.status(400).json({ error: 'Invalid session ID format.' });
-  }
-
-  let roomIdInt, startTimeDate, endTimeDate;
-  if (room_id !== undefined) {
-    roomIdInt = parseInt(room_id, 10);
-    if (isNaN(roomIdInt)) return res.status(400).json({ error: 'Invalid room_id format.'});
-  }
-  if (start_time !== undefined) {
-    startTimeDate = new Date(start_time);
-    if (isNaN(startTimeDate.getTime())) return res.status(400).json({ error: 'Invalid start_time format.'});
-  }
-  if (end_time !== undefined) {
-    endTimeDate = new Date(end_time);
-    if (isNaN(endTimeDate.getTime())) return res.status(400).json({ error: 'Invalid end_time format.'});
-  }
-  
-  // Validate time logic if both are provided or one is provided and the other exists
-  // This is a bit complex, so for now, ensure if both provided, end > start
-  if (startTimeDate && endTimeDate && endTimeDate <= startTimeDate) {
-      return res.status(400).json({ error: 'End time must be after start time.' });
-  }
-
-  if (room_id === undefined && start_time === undefined && end_time === undefined) {
-    return res.status(400).json({ error: 'No updateable fields provided (room_id, start_time, end_time).' });
-  }
-
-  try {
-    const sessionResult = await db.query('SELECT class_id, start_time as current_start_time, end_time as current_end_time FROM sessions WHERE session_id = $1', [sessionIdInt]);
-    if (sessionResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found.' });
+    if (isNaN(sessionIdInt)) {
+      return res.status(400).json({ error: 'Invalid session ID format.' });
     }
-    const sessionData = sessionResult.rows[0];
 
-    const canUpdate = await canManageSession(requestingUserId, requestingUserRole, sessionData.class_id);
-    if (!canUpdate) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to update this session.' });
+    let roomIdInt, startTimeDate, endTimeDate;
+    if (room_id !== undefined) {
+      roomIdInt = parseInt(room_id, 10);
+      if (isNaN(roomIdInt))
+        return res.status(400).json({ error: 'Invalid room_id format.' });
     }
-    
-    // More robust time validation if one is updated
-    const finalStartTime = startTimeDate || new Date(sessionData.current_start_time);
-    const finalEndTime = endTimeDate || new Date(sessionData.current_end_time);
-    if (finalEndTime <= finalStartTime) {
-        return res.status(400).json({ error: 'End time must be after start time based on current or provided values.' });
+    if (start_time !== undefined) {
+      startTimeDate = new Date(start_time);
+      if (isNaN(startTimeDate.getTime()))
+        return res.status(400).json({ error: 'Invalid start_time format.' });
     }
-    
-    // Verify room exists if room_id is being updated
-    if (roomIdInt !== undefined) {
-        const roomExists = await db.query('SELECT 1 FROM rooms WHERE room_id = $1', [roomIdInt]);
+    if (end_time !== undefined) {
+      endTimeDate = new Date(end_time);
+      if (isNaN(endTimeDate.getTime()))
+        return res.status(400).json({ error: 'Invalid end_time format.' });
+    }
+
+    // Validate time logic if both are provided or one is provided and the other exists
+    // This is a bit complex, so for now, ensure if both provided, end > start
+    if (startTimeDate && endTimeDate && endTimeDate <= startTimeDate) {
+      return res
+        .status(400)
+        .json({ error: 'End time must be after start time.' });
+    }
+
+    if (
+      room_id === undefined &&
+      start_time === undefined &&
+      end_time === undefined
+    ) {
+      return res
+        .status(400)
+        .json({
+          error:
+            'No updateable fields provided (room_id, start_time, end_time).',
+        });
+    }
+
+    try {
+      const sessionResult = await db.query(
+        'SELECT class_id, start_time as current_start_time, end_time as current_end_time FROM sessions WHERE session_id = $1',
+        [sessionIdInt]
+      );
+      if (sessionResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Session not found.' });
+      }
+      const sessionData = sessionResult.rows[0];
+
+      const canUpdate = await canManageSession(
+        requestingUserId,
+        requestingUserRole,
+        sessionData.class_id
+      );
+      if (!canUpdate) {
+        return res
+          .status(403)
+          .json({
+            error:
+              'Forbidden: You do not have permission to update this session.',
+          });
+      }
+
+      // More robust time validation if one is updated
+      const finalStartTime =
+        startTimeDate || new Date(sessionData.current_start_time);
+      const finalEndTime =
+        endTimeDate || new Date(sessionData.current_end_time);
+      if (finalEndTime <= finalStartTime) {
+        return res
+          .status(400)
+          .json({
+            error:
+              'End time must be after start time based on current or provided values.',
+          });
+      }
+
+      // Verify room exists if room_id is being updated
+      if (roomIdInt !== undefined) {
+        const roomExists = await db.query(
+          'SELECT 1 FROM rooms WHERE room_id = $1',
+          [roomIdInt]
+        );
         if (roomExists.rows.length === 0) {
-            return res.status(404).json({ error: 'Room not found for update.'});
+          return res.status(404).json({ error: 'Room not found for update.' });
         }
+      }
+
+      const updates = [];
+      const values = [];
+      let paramCount = 1;
+
+      if (roomIdInt !== undefined) {
+        updates.push(`room_id = $${paramCount++}`);
+        values.push(roomIdInt);
+      }
+      if (startTimeDate !== undefined) {
+        updates.push(`start_time = $${paramCount++}`);
+        values.push(startTimeDate);
+      }
+      if (endTimeDate !== undefined) {
+        updates.push(`end_time = $${paramCount++}`);
+        values.push(endTimeDate);
+      }
+      updates.push(`updated_at = current_timestamp`);
+
+      if (updates.length === 1) {
+        // only updated_at
+        return res.status(400).json({ error: 'No valid fields to update.' });
+      }
+
+      values.push(sessionIdInt);
+      const queryText = `UPDATE sessions SET ${updates.join(', ')} WHERE session_id = $${paramCount} RETURNING *`;
+
+      const result = await db.query(queryText, values);
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error(`Error updating session ${sessionIdInt}:`, err);
+      res.status(500).json({ error: 'Server error updating session.' });
     }
-
-    const updates = [];
-    const values = [];
-    let paramCount = 1;
-
-    if (roomIdInt !== undefined) { updates.push(`room_id = $${paramCount++}`); values.push(roomIdInt); }
-    if (startTimeDate !== undefined) { updates.push(`start_time = $${paramCount++}`); values.push(startTimeDate); }
-    if (endTimeDate !== undefined) { updates.push(`end_time = $${paramCount++}`); values.push(endTimeDate); }
-    updates.push(`updated_at = current_timestamp`);
-
-    if (updates.length === 1) { // only updated_at
-        return res.status(400).json({ error: 'No valid fields to update.'});
-    }
-
-    values.push(sessionIdInt);
-    const queryText = `UPDATE sessions SET ${updates.join(', ')} WHERE session_id = $${paramCount} RETURNING *`;
-    
-    const result = await db.query(queryText, values);
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(`Error updating session ${sessionIdInt}:`, err);
-    res.status(500).json({ error: 'Server error updating session.' });
   }
-});
+);
 
 // --- Delete a Session by ID (Teacher who owns class only) ---
 // DELETE /api/sessions/:sessionId
-router.delete('/:sessionId', authMiddleware, validate(schemas.session.getById, 'params'), async (req, res) => {
-  const { sessionId } = req.params;
-  const sessionIdInt = parseInt(sessionId, 10);
-  const requestingUserId = req.user.id;
-  const requestingUserRole = req.user.role;
+router.delete(
+  '/:sessionId',
+  authMiddleware,
+  validate(schemas.session.getById, 'params'),
+  async (req, res) => {
+    const { sessionId } = req.params;
+    const sessionIdInt = parseInt(sessionId, 10);
+    const requestingUserId = req.user.id;
+    const requestingUserRole = req.user.role;
 
-  if (isNaN(sessionIdInt)) {
-    return res.status(400).json({ error: 'Invalid session ID format.' });
-  }
-
-  try {
-    const sessionResult = await db.query('SELECT class_id FROM sessions WHERE session_id = $1', [sessionIdInt]);
-    if (sessionResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found.' });
-    }
-    const classIdForSession = sessionResult.rows[0].class_id;
-
-    const canDelete = await canManageSession(requestingUserId, requestingUserRole, classIdForSession);
-    if (!canDelete) {
-      return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this session.' });
+    if (isNaN(sessionIdInt)) {
+      return res.status(400).json({ error: 'Invalid session ID format.' });
     }
 
-    const result = await db.query('DELETE FROM sessions WHERE session_id = $1 RETURNING *', [sessionIdInt]);
-    // Cascade delete for attendance_records is handled by DB constraints
-    res.status(200).json({ message: `Session ID ${sessionIdInt} (Class ID: ${result.rows[0].class_id}) and associated attendance records deleted.`, details: result.rows[0] });
-  } catch (err) {
-    console.error(`Error deleting session ${sessionIdInt}:`, err);
-    res.status(500).json({ error: 'Server error deleting session.' });
+    try {
+      const sessionResult = await db.query(
+        'SELECT class_id FROM sessions WHERE session_id = $1',
+        [sessionIdInt]
+      );
+      if (sessionResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Session not found.' });
+      }
+      const classIdForSession = sessionResult.rows[0].class_id;
+
+      const canDelete = await canManageSession(
+        requestingUserId,
+        requestingUserRole,
+        classIdForSession
+      );
+      if (!canDelete) {
+        return res
+          .status(403)
+          .json({
+            error:
+              'Forbidden: You do not have permission to delete this session.',
+          });
+      }
+
+      const result = await db.query(
+        'DELETE FROM sessions WHERE session_id = $1 RETURNING *',
+        [sessionIdInt]
+      );
+      // Cascade delete for attendance_records is handled by DB constraints
+      res
+        .status(200)
+        .json({
+          message: `Session ID ${sessionIdInt} (Class ID: ${result.rows[0].class_id}) and associated attendance records deleted.`,
+          details: result.rows[0],
+        });
+    } catch (err) {
+      console.error(`Error deleting session ${sessionIdInt}:`, err);
+      res.status(500).json({ error: 'Server error deleting session.' });
+    }
   }
-});
+);
 
 // --- Get Attendance Records for a Session (Admin can view all, Teacher who owns class) ---
 // GET /api/sessions/:sessionId/attendance
-router.get('/:sessionId/attendance', authMiddleware, validate(schemas.session.getAttendance, 'params'), async (req, res) => {
-  const { sessionId } = req.params;
-  const sessionIdInt = parseInt(sessionId, 10);
-  const requestingUserId = req.user.id;
-  const requestingUserRole = req.user.role;
+router.get(
+  '/:sessionId/attendance',
+  authMiddleware,
+  validate(schemas.session.getAttendance, 'params'),
+  async (req, res) => {
+    const { sessionId } = req.params;
+    const sessionIdInt = parseInt(sessionId, 10);
+    const requestingUserId = req.user.id;
+    const requestingUserRole = req.user.role;
 
-  if (isNaN(sessionIdInt)) {
-    return res.status(400).json({ error: 'Invalid session ID format.' });
-  }
-
-  try {
-    // 1. Fetch session to get class_id for authorization
-    const sessionResult = await db.query('SELECT class_id FROM sessions WHERE session_id = $1', [sessionIdInt]);
-    if (sessionResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found.' });
+    if (isNaN(sessionIdInt)) {
+      return res.status(400).json({ error: 'Invalid session ID format.' });
     }
-    const classIdForSession = sessionResult.rows[0].class_id;
 
-    // 2. Authorize - Admin can view all attendance, teachers can only view their own
-    if (requestingUserRole === ROLES.ADMIN) {
-      // Admin can view any attendance
-    } else {
-      const canViewAttendance = await canManageSession(requestingUserId, requestingUserRole, classIdForSession);
-      if (!canViewAttendance) {
-        return res.status(403).json({ error: 'Forbidden: You do not have permission to view attendance for this session.' });
+    try {
+      // 1. Fetch session to get class_id for authorization
+      const sessionResult = await db.query(
+        'SELECT class_id FROM sessions WHERE session_id = $1',
+        [sessionIdInt]
+      );
+      if (sessionResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Session not found.' });
       }
-    }
+      const classIdForSession = sessionResult.rows[0].class_id;
 
-    // 3. Fetch attendance records with student details
-    const attendanceRecords = await db.query(
-      `SELECT 
+      // 2. Authorize - Admin can view all attendance, teachers can only view their own
+      if (requestingUserRole === ROLES.ADMIN) {
+        // Admin can view any attendance
+      } else {
+        const canViewAttendance = await canManageSession(
+          requestingUserId,
+          requestingUserRole,
+          classIdForSession
+        );
+        if (!canViewAttendance) {
+          return res
+            .status(403)
+            .json({
+              error:
+                'Forbidden: You do not have permission to view attendance for this session.',
+            });
+        }
+      }
+
+      // 3. Fetch attendance records with student details
+      const attendanceRecords = await db.query(
+        `SELECT 
          ar.record_id, 
          ar.session_id, 
          ar.student_id, 
@@ -328,14 +467,20 @@ router.get('/:sessionId/attendance', authMiddleware, validate(schemas.session.ge
        LEFT JOIN users modifier ON ar.modified_by_teacher_id = modifier.user_id -- Left join for optional modifier
        WHERE ar.session_id = $1
        ORDER BY u.last_name, u.first_name`,
-      [sessionIdInt]
-    );
+        [sessionIdInt]
+      );
 
-    res.json(attendanceRecords.rows);
-  } catch (err) {
-    console.error(`Error fetching attendance for session ${sessionIdInt}:`, err);
-    res.status(500).json({ error: 'Server error fetching attendance records.' });
+      res.json(attendanceRecords.rows);
+    } catch (err) {
+      console.error(
+        `Error fetching attendance for session ${sessionIdInt}:`,
+        err
+      );
+      res
+        .status(500)
+        .json({ error: 'Server error fetching attendance records.' });
+    }
   }
-});
+);
 
 module.exports = router;
