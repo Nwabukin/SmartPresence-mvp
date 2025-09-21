@@ -60,7 +60,11 @@ export const apiRequest = async (
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    // Ensure proper URL construction by handling leading slashes
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const url = `${API_BASE_URL}/${cleanEndpoint}`;
+    console.log('🌐 Making API request to:', url);
+    const response = await fetch(url, config);
 
     if (!response.ok) {
       // Attempt to parse error response from API, otherwise use statusText
