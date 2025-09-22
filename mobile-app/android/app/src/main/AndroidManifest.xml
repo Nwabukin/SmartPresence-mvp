@@ -21,7 +21,7 @@
     <!-- WiFi scanning permissions -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <application
-        android:label="mobile_app"
+        android:label="SmartPresence"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true">
