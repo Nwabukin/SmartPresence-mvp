@@ -19,7 +19,7 @@ CREATE TABLE rooms (
     name VARCHAR(100) NOT NULL,
     location_description TEXT, -- e.g., Building A, Floor 2
     wifi_ssid VARCHAR(100) UNIQUE NOT NULL, -- Assuming SSID is unique identifier for room wifi
-    bluetooth_beacon_id VARCHAR(100) UNIQUE NOT NULL, -- Assuming beacon ID is unique
+    bluetooth_beacon_id VARCHAR(100) UNIQUE, -- Optional; unique when provided
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

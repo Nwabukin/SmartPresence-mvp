@@ -19,10 +19,13 @@ router.post(
   async (req, res) => {
     const { name, wifi_ssid, bluetooth_beacon_id } = req.body;
 
+    // Normalize optional beacon: empty string -> null
+    const normalizedBeaconId = bluetooth_beacon_id === '' ? null : bluetooth_beacon_id;
+
     try {
       const newRoom = await db.query(
         'INSERT INTO rooms (name, wifi_ssid, bluetooth_beacon_id) VALUES ($1, $2, $3) RETURNING *',
-        [name, wifi_ssid, bluetooth_beacon_id]
+        [name, wifi_ssid, normalizedBeaconId]
       );
       res.status(201).json(newRoom.rows[0]);
     } catch (err) {
@@ -86,10 +89,13 @@ router.put(
     const { id } = req.params;
     const { name, wifi_ssid, bluetooth_beacon_id } = req.body;
 
+    // Normalize optional beacon: empty string -> null
+    const normalizedBeaconId = bluetooth_beacon_id === '' ? null : bluetooth_beacon_id;
+
     try {
       const updatedRoom = await db.query(
         'UPDATE rooms SET name = $1, wifi_ssid = $2, bluetooth_beacon_id = $3 WHERE room_id = $4 RETURNING *',
-        [name, wifi_ssid, bluetooth_beacon_id, id]
+        [name, wifi_ssid, normalizedBeaconId, id]
       );
 
       if (updatedRoom.rows.length === 0) {
