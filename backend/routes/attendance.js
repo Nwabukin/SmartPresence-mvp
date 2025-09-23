@@ -4,6 +4,7 @@ const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const ROLES = require('../utils/roles');
 const { validate, schemas } = require('../utils/validation'); // Input validation
+const { sendSuccess, handleDbError } = require('../utils/http');
 
 const VALID_ATTENDANCE_STATUSES = ['present', 'absent', 'late', 'excused'];
 
@@ -75,12 +76,9 @@ router.put(
         [status, requestingUserId, recordIdInt]
       );
 
-      res.json(updateResult.rows[0]);
+      return sendSuccess(res, 200, 'Attendance record updated successfully', updateResult.rows[0]);
     } catch (err) {
-      console.error(`Error updating attendance record ${recordIdInt}:`, err);
-      res
-        .status(500)
-        .json({ error: 'Server error updating attendance record.' });
+      return handleDbError(err, res);
     }
   }
 );
