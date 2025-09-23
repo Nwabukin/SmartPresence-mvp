@@ -14,6 +14,7 @@ const {
   ConflictError,
   DatabaseError,
 } = require('../utils/errorHandler');
+const { sendSuccess, handleDbError } = require('../utils/http');
 
 // --- Get All Users (Admin/Teacher Only) ---
 // GET /api/users/
@@ -91,8 +92,7 @@ router.get(
       return base;
     });
 
-    // Return raw array to match existing frontend expectations
-    res.json(users);
+    return sendSuccess(res, 200, 'Users retrieved successfully', users);
   })
 );
 
@@ -189,10 +189,9 @@ router.get(
         };
       }
 
-      res.json(withProfile);
+      return sendSuccess(res, 200, 'User retrieved successfully', withProfile);
     } catch (err) {
-      console.error(`Error fetching user ${requestedUserId}:`, err);
-      res.status(500).json({ error: 'Server error fetching user.' });
+      return handleDbError(err, res);
     }
   })
 );
@@ -455,13 +454,9 @@ router.put(
           .json({ error: 'User not found or update failed.' });
       }
 
-      return res.json({
-        message: 'User updated successfully.',
-        user: updatedUser.user,
-      });
+      return sendSuccess(res, 200, 'User updated successfully', updatedUser.user);
     } catch (err) {
-      console.error(`[API] Error updating user ${requestedUserId}:`, err);
-      return res.status(500).json({ error: 'Server error updating user.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -513,18 +508,9 @@ router.delete(
       // depending on the schema design.
       await db.query('DELETE FROM users WHERE user_id = $1', [requestedUserId]);
 
-      res
-        .status(200)
-        .json({
-          message: `User with ID ${requestedUserId} deleted successfully.`,
-        }); // 200 OK or 204 No Content
+      return sendSuccess(res, 200, `User with ID ${requestedUserId} deleted successfully.`, null); // 200 OK
     } catch (err) {
-      console.error(`Error deleting user ${requestedUserId}:`, err);
-      // Check for foreign key constraint errors specifically if needed
-      // if (err.code === '23503') { // PostgreSQL foreign key violation code
-      //   return res.status(409).json({ error: 'Conflict: Cannot delete user because they are referenced by other records (e.g., attendance).' });
-      // }
-      res.status(500).json({ error: 'Server error deleting user.' });
+      return handleDbError(err, res, { foreignKey: 'Cannot delete user because they are referenced by other records.' });
     }
   }
 );
@@ -740,18 +726,12 @@ router.post(
           .json({ error: 'Conflict: Email address is already in use.' });
       }
 
-      return res
-        .status(201)
-        .json({ message: 'User created successfully.', user: result.user });
+      return sendSuccess(res, 201, 'User created successfully', result.user);
     } catch (err) {
-      console.error('[API] Error creating user:', err);
-      // Basic constraint handling for uniqueness
       if (err.message && err.message.startsWith('Missing required')) {
         return res.status(400).json({ error: err.message });
       }
-      return res
-        .status(500)
-        .json({ error: 'Server error during user creation.' });
+      return handleDbError(err, res, { unique: 'Email address is already in use.' });
     }
   }
 );
