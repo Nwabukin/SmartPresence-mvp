@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db'); // Adjust path to db connection
 const { validate, schemas } = require('../utils/validation'); // Input validation
+const { sendSuccess } = require('../utils/http');
 
 const router = express.Router();
 
@@ -65,10 +66,9 @@ router.post('/login', validate(schemas.auth.login), async (req, res) => {
       { expiresIn: '1h' }, // Token expires in 1 hour (adjust as needed)
       (err, token) => {
         if (err) throw err;
-        res.json({
+        return sendSuccess(res, 200, 'Login successful', {
           token,
           user: {
-            // Send back some user info
             id: user.user_id,
             email: user.email,
             role: user.role,
