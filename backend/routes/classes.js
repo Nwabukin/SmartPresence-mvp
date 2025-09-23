@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/auth'); // Authentication middlewa
 const ROLES = require('../utils/roles'); // Roles
 const { validate, schemas } = require('../utils/validation'); // Input validation
 const NotificationService = require('../services/notificationService');
+const { sendSuccess, handleDbError } = require('../utils/http');
 
 // Placeholder for Class model structure (fields we expect for a class)
 // Example: { class_name: "Introduction to Programming", course_code: "CS101", teacher_id: 1 }
@@ -31,11 +32,9 @@ router.post(
         [name, course_code, description, teacher_id]
       );
       const newClass = result.rows[0];
-      res.status(201).json(newClass);
+      return sendSuccess(res, 201, 'Class created successfully', newClass);
     } catch (err) {
-      console.error('Error creating class:', err);
-      // Check for unique constraint violation for course_code if you add one later
-      res.status(500).json({ error: 'Server error creating class.' });
+      return handleDbError(err, res, { unique: 'Class with provided value already exists' });
     }
   }
 );
@@ -60,10 +59,9 @@ router.get('/', authMiddleware, async (req, res) => {
       params = [req.user.id];
     }
     const result = await db.query(query, params);
-    res.json(result.rows);
+    return sendSuccess(res, 200, 'Classes retrieved successfully', result.rows);
   } catch (err) {
-    console.error('Error fetching classes:', err);
-    res.status(500).json({ error: 'Server error fetching classes.' });
+    return handleDbError(err, res);
   }
 });
 
@@ -98,10 +96,9 @@ router.get(
       // if (req.user.role === ROLES.TEACHER && result.rows[0].teacher_id !== req.user.id) {
       //   return res.status(403).json({ error: 'Forbidden: You do not own this class.' });
       // }
-      res.json(result.rows[0]);
+      return sendSuccess(res, 200, 'Class retrieved successfully', result.rows[0]);
     } catch (err) {
-      console.error(`Error fetching class ${classId}:`, err);
-      res.status(500).json({ error: 'Server error fetching class.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -192,14 +189,11 @@ router.put(
 
       if (result.rows.length === 0) {
         // Should not happen if previous check passed, but as a safeguard
-        return res
-          .status(404)
-          .json({ error: 'Class not found or update failed.' });
+        return res.status(404).json({ error: 'Class not found or update failed.' });
       }
-      res.json(result.rows[0]);
+      return sendSuccess(res, 200, 'Class updated successfully', result.rows[0]);
     } catch (err) {
-      console.error(`Error updating class ${classId}:`, err);
-      res.status(500).json({ error: 'Server error updating class.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -257,15 +251,9 @@ router.delete(
           .json({ error: 'Class not found, could not delete.' });
       }
       // Cascade delete for enrollments and sessions is handled by DB constraints
-      res
-        .status(200)
-        .json({
-          message: `Class '${result.rows[0].name}' (ID: ${classId}) and all associated enrollments/sessions deleted successfully.`,
-        });
+      return sendSuccess(res, 200, `Class '${result.rows[0].name}' (ID: ${classId}) and all associated enrollments/sessions deleted successfully.`, null);
     } catch (err) {
-      console.error(`Error deleting class ${classId}:`, err);
-      // Handle potential foreign key issues if cascade wasn't set up, though it is in this schema
-      res.status(500).json({ error: 'Server error deleting class.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -354,21 +342,13 @@ router.post('/:classId/students', authMiddleware, async (req, res) => {
       // Don't fail the enrollment if notification fails
     }
 
-    res.status(201).json(enrollmentResult.rows[0]);
+    return sendSuccess(res, 201, 'Student enrolled successfully', enrollmentResult.rows[0]);
   } catch (err) {
     if (err.code === '23505') {
       // Unique violation (student already enrolled)
-      return res
-        .status(409)
-        .json({
-          error: 'Conflict: Student is already enrolled in this class.',
-        });
+      return res.status(409).json({ error: 'Conflict', message: 'Student is already enrolled in this class.' });
     }
-    console.error(
-      `Error enrolling student ${studentIdInt} in class ${classIdInt}:`,
-      err
-    );
-    res.status(500).json({ error: 'Server error enrolling student.' });
+    return handleDbError(err, res);
   }
 });
 
@@ -433,18 +413,9 @@ router.delete(
               'Enrollment record not found. Student may not be enrolled in this class.',
           });
       }
-      res
-        .status(200)
-        .json({
-          message: 'Student unenrolled successfully.',
-          details: unenrollmentResult.rows[0],
-        });
+      return sendSuccess(res, 200, 'Student unenrolled successfully.', unenrollmentResult.rows[0]);
     } catch (err) {
-      console.error(
-        `Error unenrolling student ${studentIdInt} from class ${classIdInt}:`,
-        err
-      );
-      res.status(500).json({ error: 'Server error unenrolling student.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -502,10 +473,9 @@ router.get('/:classId/students', authMiddleware, async (req, res) => {
       [classIdInt]
     );
 
-    res.json(enrolledStudentsResult.rows);
+    return sendSuccess(res, 200, 'Enrolled students retrieved successfully', enrolledStudentsResult.rows);
   } catch (err) {
-    console.error(`Error fetching students for class ${classIdInt}:`, err);
-    res.status(500).json({ error: 'Server error fetching enrolled students.' });
+    return handleDbError(err, res);
   }
 });
 

@@ -92,7 +92,12 @@ export const apiRequest = async (
       return null;
     }
 
-    return await response.json();
+    const json = await response.json();
+    // Backward compatibility: unwrap { success, message, data } responses
+    if (json && typeof json === 'object' && 'data' in json && 'success' in json) {
+      return json.data;
+    }
+    return json;
   } catch (error) {
     console.error('API Request Error:', error);
     throw error; // Re-throw to be caught by the caller

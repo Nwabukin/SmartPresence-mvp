@@ -9,6 +9,8 @@ const { validate, schemas } = require('../utils/validation'); // Input validatio
 // Database connection (pool or query function)
 const db = require('../db'); // Assuming db/index.js or db.js exports query or pool
 
+const { sendSuccess, handleDbError } = require('../utils/http');
+
 // Create a new room
 // POST /api/rooms
 // Protected by authMiddleware (user must be logged in) and adminMiddleware (user must be an admin)
@@ -27,10 +29,9 @@ router.post(
         'INSERT INTO rooms (name, wifi_ssid, bluetooth_beacon_id) VALUES ($1, $2, $3) RETURNING *',
         [name, wifi_ssid, normalizedBeaconId]
       );
-      res.status(201).json(newRoom.rows[0]);
+      return sendSuccess(res, 201, 'Room created successfully', newRoom.rows[0]);
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
+      return handleDbError(err, res);
     }
   }
 );
@@ -41,10 +42,9 @@ router.post(
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const allRooms = await db.query('SELECT * FROM rooms ORDER BY name ASC');
-    res.json(allRooms.rows);
+    return sendSuccess(res, 200, 'Rooms retrieved successfully', allRooms.rows);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    return handleDbError(err, res);
   }
 });
 
@@ -65,15 +65,14 @@ router.get(
       if (room.rows.length === 0) {
         return res.status(404).json({ msg: 'Room not found' });
       }
-      res.json(room.rows[0]);
+      return sendSuccess(res, 200, 'Room retrieved successfully', room.rows[0]);
     } catch (err) {
-      console.error(err.message);
       // Check for specific errors, e.g., invalid UUID format if your ID is UUID
       if (err.message.includes('invalid input syntax for type uuid')) {
         // Example for PostgreSQL UUID
         return res.status(400).json({ msg: 'Invalid room ID format.' });
       }
-      res.status(500).send('Server error');
+      return handleDbError(err, res);
     }
   }
 );
@@ -101,14 +100,13 @@ router.put(
       if (updatedRoom.rows.length === 0) {
         return res.status(404).json({ msg: 'Room not found to update' });
       }
-      res.json(updatedRoom.rows[0]);
+      return sendSuccess(res, 200, 'Room updated successfully', updatedRoom.rows[0]);
     } catch (err) {
-      console.error(err.message);
       // Check for specific errors, e.g., invalid UUID format
       if (err.message.includes('invalid input syntax for type uuid')) {
         return res.status(400).json({ msg: 'Invalid room ID format.' });
       }
-      res.status(500).send('Server error');
+      return handleDbError(err, res);
     }
   }
 );
@@ -131,19 +129,14 @@ router.delete(
         // rowCount is more standard for DELETE w/o RETURNING, but RETURNING * gives rows.
         return res.status(404).json({ msg: 'Room not found to delete' });
       }
-      // If RETURNING * was used, deletedOp.rows[0] would contain the deleted room.
-      // If not, you might just send a success message.
-      res.json({
-        msg: 'Room deleted successfully',
-        deletedRoom: deleteOp.rows[0],
-      });
+      // Align with documented response shape: data is null on delete success
+      return sendSuccess(res, 200, 'Room deleted successfully', null);
     } catch (err) {
-      console.error(err.message);
       // Check for specific errors, e.g., invalid UUID format
       if (err.message.includes('invalid input syntax for type uuid')) {
         return res.status(400).json({ msg: 'Invalid room ID format.' });
       }
-      res.status(500).send('Server error');
+      return handleDbError(err, res);
     }
   }
 );
