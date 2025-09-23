@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/auth');
 const ROLES = require('../utils/roles');
 const { validate, schemas } = require('../utils/validation'); // Input validation
 const NotificationService = require('../services/notificationService');
+const { sendSuccess, handleDbError } = require('../utils/http');
 
 // Helper function to check if user can manage a session (teacher owns the class)
 async function canManageSession(userId, userRole, classId) {
@@ -87,10 +88,9 @@ router.post(
         // Don't fail the session creation if notifications fail
       }
 
-      res.status(201).json(newSession);
+      return sendSuccess(res, 201, 'Session created successfully', newSession);
     } catch (err) {
-      console.error('Error creating session:', err);
-      res.status(500).json({ error: 'Server error creating session.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -142,10 +142,9 @@ router.get('/', authMiddleware, async (req, res) => {
     query += ' ORDER BY s.start_time DESC';
 
     const result = await db.query(query, params);
-    res.json(result.rows);
+    return sendSuccess(res, 200, 'Sessions retrieved successfully', result.rows);
   } catch (err) {
-    console.error('Error fetching sessions:', err);
-    res.status(500).json({ error: 'Server error fetching sessions.' });
+    return handleDbError(err, res);
   }
 });
 
@@ -196,10 +195,9 @@ router.get(
             });
         }
       }
-      res.json(session);
+      return sendSuccess(res, 200, 'Session retrieved successfully', session);
     } catch (err) {
-      console.error(`Error fetching session ${sessionIdInt}:`, err);
-      res.status(500).json({ error: 'Server error fetching session.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -336,10 +334,9 @@ router.put(
       const queryText = `UPDATE sessions SET ${updates.join(', ')} WHERE session_id = $${paramCount} RETURNING *`;
 
       const result = await db.query(queryText, values);
-      res.json(result.rows[0]);
+      return sendSuccess(res, 200, 'Session updated successfully', result.rows[0]);
     } catch (err) {
-      console.error(`Error updating session ${sessionIdInt}:`, err);
-      res.status(500).json({ error: 'Server error updating session.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -389,15 +386,9 @@ router.delete(
         [sessionIdInt]
       );
       // Cascade delete for attendance_records is handled by DB constraints
-      res
-        .status(200)
-        .json({
-          message: `Session ID ${sessionIdInt} (Class ID: ${result.rows[0].class_id}) and associated attendance records deleted.`,
-          details: result.rows[0],
-        });
+      return sendSuccess(res, 200, `Session ID ${sessionIdInt} (Class ID: ${result.rows[0].class_id}) and associated attendance records deleted.`, null);
     } catch (err) {
-      console.error(`Error deleting session ${sessionIdInt}:`, err);
-      res.status(500).json({ error: 'Server error deleting session.' });
+      return handleDbError(err, res);
     }
   }
 );
@@ -449,7 +440,7 @@ router.get(
       }
 
       // 3. Fetch attendance records with student details
-      const attendanceRecords = await db.query(
+    const attendanceRecords = await db.query(
         `SELECT 
          ar.record_id, 
          ar.session_id, 
@@ -472,15 +463,9 @@ router.get(
         [sessionIdInt]
       );
 
-      res.json(attendanceRecords.rows);
+    return sendSuccess(res, 200, 'Attendance records retrieved successfully', attendanceRecords.rows);
     } catch (err) {
-      console.error(
-        `Error fetching attendance for session ${sessionIdInt}:`,
-        err
-      );
-      res
-        .status(500)
-        .json({ error: 'Server error fetching attendance records.' });
+    return handleDbError(err, res);
     }
   }
 );
