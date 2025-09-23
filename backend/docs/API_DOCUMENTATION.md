@@ -515,7 +515,7 @@ Create a new room (Admin only).
 {
   "name": "Computer Lab 1",
   "wifi_ssid": "SmartPresence_Lab1",
-  "bluetooth_beacon_id": "BEACON_002"
+  "bluetooth_beacon_id": null
 }
 ```
 
@@ -529,7 +529,7 @@ Create a new room (Admin only).
     "room_id": 2,
     "name": "Computer Lab 1",
     "wifi_ssid": "SmartPresence_Lab1",
-    "bluetooth_beacon_id": "BEACON_002",
+    "bluetooth_beacon_id": null,
     "created_at": "2025-01-17T10:30:00.000Z"
   },
   "timestamp": "2025-01-17T10:30:00.000Z"

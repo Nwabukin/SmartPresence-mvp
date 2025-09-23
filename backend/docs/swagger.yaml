@@ -1294,6 +1294,7 @@ components:
         bluetooth_beacon_id:
           type: string
           maxLength: 100
+          nullable: true
 
     UpdateRoomRequest:
       type: object
@@ -1310,6 +1311,7 @@ components:
         bluetooth_beacon_id:
           type: string
           maxLength: 100
+          nullable: true
 
     # Class Schemas
     Class:
