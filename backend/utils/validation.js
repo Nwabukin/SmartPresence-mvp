@@ -68,10 +68,6 @@ const userSchemas = {
       phone: commonPatterns.phone,
     }).optional(),
   }).min(1), // At least one field must be provided
-
-  getById: Joi.object({
-    id: commonPatterns.id,
-  }),
 };
 
 // Room validation schemas
@@ -144,9 +140,11 @@ const sessionSchemas = {
       return value;
     }),
 
-  getById: Joi.object({
-    id: commonPatterns.id,
-  }),
+  // Accept either :id or :sessionId for routes using params
+  getById: Joi.alternatives().try(
+    Joi.object({ id: commonPatterns.id }),
+    Joi.object({ sessionId: commonPatterns.id })
+  ),
 
   getAttendance: Joi.object({
     sessionId: commonPatterns.id,

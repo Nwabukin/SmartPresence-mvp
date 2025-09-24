@@ -1,5 +1,5 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'https://smartpresence-backend-u3kb.onrender.com/api'; // Fallback for deployed backend
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'; // Local backend for development
 
 // Ensure API_BASE_URL always ends with /api
 const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
@@ -82,8 +82,11 @@ export const apiRequest = async (
       } catch {
         // Ignore if response is not JSON
       }
-      const errorMessage =
-        errorData?.error || errorData?.message || response.statusText;
+      const errorMessage = errorData?.error || errorData?.message || response.statusText;
+      // Surface validation details if provided by backend (e.g., Joi)
+      if (errorData?.details) {
+        console.error('API Validation Details:', errorData.details);
+      }
       throw new Error(`API request failed: ${response.status} ${errorMessage}`);
     }
 

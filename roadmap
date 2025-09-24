@@ -1,0 +1,49 @@
+SmartPresence MVP – Roadmap
+
+1) Facial Authentication for Attendance (FACEIO)
+   - Goal: Ensure only the legitimate student can mark attendance using facial authentication with liveness detection.
+   - Scope:
+     - Mobile App: Integrate FACEIO via in-app WebView (Android WebView / iOS WKWebView / RN/Flutter WebView)
+       - Enrollment: Trigger `enroll()` after first login; capture returned `facialId`
+       - Attendance: Trigger `authenticate()` before marking; require recent successful auth
+     - Backend:
+       - Store `facialId` on student record; encrypt at rest
+       - Verify `facialId` match on attendance submission
+       - Configure FACEIO webhooks for enroll/auth events and audit trails
+       - Add admin tooling for re-enrollment/reset
+     - Security & Privacy:
+       - Enable liveness detection
+       - Obtain explicit consent and provide non-biometric fallback
+       - Implement delete/export of `facialId` on request
+     - Ops & Rollout:
+       - Feature flag by cohort
+       - Track success/error metrics and false reject rate (FRR)
+       - Pilot, then expand
+   - References: FACEIO Developer Center – https://faceio.net/dev-guides
+
+   - Tasks (incremental):
+     1. Create FACEIO app in Console; obtain Public ID
+     2. Mobile: Add WebView flow and wire `fio.js` (env-based Public ID)
+     3. Backend: Add `facialId` field to students; migrations + encryption
+     4. Webhooks: Implement endpoints; map events to students; logs
+     5. Attendance API: Enforce recent `authenticate()` and `facialId` match
+     6. UX: Consent screen, fallback flow, error states
+     7. Admin: Re-enroll/reset flows, audit views
+     8. Metrics: Instrumentation, dashboards, alerts
+     9. QA: Spoofing tests, edge cases, offline handling, performance
+    10. Rollout: Pilot → staged rollout → general availability
+
+2) Offline Attendance Fallback
+   - Allow PIN or staff verification when network/camera unavailable; flag for review.
+
+3) Device Binding (Optional, post-MVP)
+   - Bind account to trusted device; step-up auth if device changes.
+
+4) Kiosk Mode (Optional)
+   - Shared device check-in with invigilator oversight; session-based locking.
+
+5) Compliance & Data Governance
+   - Data retention policy for `facialId`; regional storage; DSR workflows.
+
+6) Analytics & Reporting
+   - Attendance accuracy, spoofing attempts, enrollment completion rates.
