@@ -54,9 +54,29 @@ const SessionForm = ({
     }
     setFormError('');
     
-    // Combine date and time into ISO timestamps
-    const startDateTime = new Date(`${sessionDate}T${startTime}:00`).toISOString();
-    const endDateTime = new Date(`${sessionDate}T${endTime}:00`).toISOString();
+    // Combine date and time into ISO timestamps preserving local intent
+    // Build Date objects and serialize with timezone offset instead of forcing UTC
+    const startLocal = new Date(`${sessionDate}T${startTime}:00`);
+    const endLocal = new Date(`${sessionDate}T${endTime}:00`);
+
+    const toIsoWithOffset = (d) => {
+      const pad = (n) => String(n).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth() + 1);
+      const dd = pad(d.getDate());
+      const HH = pad(d.getHours());
+      const MM = pad(d.getMinutes());
+      const SS = pad(d.getSeconds());
+      const tzMin = d.getTimezoneOffset(); // minutes difference from UTC
+      const sign = tzMin > 0 ? '-' : '+';
+      const abs = Math.abs(tzMin);
+      const offH = pad(Math.floor(abs / 60));
+      const offM = pad(abs % 60);
+      return `${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}${sign}${offH}:${offM}`;
+    };
+
+    const startDateTime = toIsoWithOffset(startLocal);
+    const endDateTime = toIsoWithOffset(endLocal);
     
     onSubmit({
       class_id: parseInt(classId),

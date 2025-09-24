@@ -292,9 +292,7 @@ function TeacherSessionManagementPage() {
                           <td>
                             <div>
                               <div className="font-medium">{roomDetails ? roomDetails.name : 'N/A'}</div>
-                              {roomDetails && (
-                                <div className="text-sm text-gray-500">Capacity: {roomDetails.capacity}</div>
-                              )}
+                              {/* Capacity not tracked on backend; omit to avoid undefined */}
                             </div>
                           </td>
                           <td>
