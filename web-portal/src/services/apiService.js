@@ -1,8 +1,11 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'https://smartpresence-backend-u3kb.onrender.com/api'; // Fallback for deployed backend
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-// Ensure API_BASE_URL always ends with /api
-const BASE_URL = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+// Normalize base: remove trailing slashes, then ensure it ends with /api
+const BASE_NO_TRAILING_SLASH = (API_BASE_URL || '').replace(/\/+$/, '');
+const BASE_URL = BASE_NO_TRAILING_SLASH.endsWith('/api')
+  ? BASE_NO_TRAILING_SLASH
+  : `${BASE_NO_TRAILING_SLASH}/api`;
 
 /**
  * Retrieves the JWT token from localStorage.

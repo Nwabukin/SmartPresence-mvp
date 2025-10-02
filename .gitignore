@@ -78,3 +78,8 @@ build/
 
 # Cursor files (if you want to ignore them, otherwise keep for shared context)
 # .cursor/ 
+
+# amplify
+.amplify
+amplify_outputs*
+amplifyconfiguration*

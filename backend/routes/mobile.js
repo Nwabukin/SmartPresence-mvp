@@ -6,6 +6,147 @@ const db = require('../db');
 const { validate, schemas } = require('../utils/validation');
 const authMiddleware = require('../middleware/auth');
 const NotificationService = require('../services/notificationService');
+const {
+  S3Client,
+  PutObjectCommand,
+} = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const {
+  RekognitionClient,
+  IndexFacesCommand,
+  SearchFacesByImageCommand,
+} = require('@aws-sdk/client-rekognition');
+
+const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+const S3_BUCKET = process.env.S3_BUCKET;
+const REKOG_COLLECTION_ID = process.env.REKOG_COLLECTION_ID;
+
+const s3 = new S3Client({ region: AWS_REGION });
+const rekog = new RekognitionClient({ region: AWS_REGION });
+// POST /api/mobile/biometrics/enroll
+router.post('/biometrics/enroll', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student')
+    return res.status(403).json({ error: 'Forbidden' });
+  const { face_id } = req.body || {};
+  if (!face_id || typeof face_id !== 'string') {
+    return res.status(400).json({ error: 'face_id is required' });
+  }
+  try {
+    // Ensure student profile exists
+    const prof = await db.query(
+      'SELECT user_id FROM student_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+    if (!prof.rows.length) {
+      return res.status(404).json({ error: 'Student profile not found' });
+    }
+
+    await db.query(
+      'UPDATE student_profiles SET rekognition_face_id = $1 WHERE user_id = $2',
+      [face_id, req.user.id]
+    );
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Biometrics enroll error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+// POST /api/mobile/biometrics/presign-upload
+router.post('/biometrics/presign-upload', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    if (!S3_BUCKET) return res.status(500).json({ error: 'S3 bucket not configured' });
+    const { content_type, purpose } = req.body || {};
+    if (!content_type || typeof content_type !== 'string') {
+      return res.status(400).json({ error: 'content_type is required' });
+    }
+    const safePurpose = typeof purpose === 'string' ? purpose : 'enroll';
+    const timestamp = Date.now();
+    const key = `${safePurpose}/selfies/${req.user.id}/${timestamp}.jpg`;
+    const command = new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      ContentType: content_type,
+    });
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 5 });
+    return res.status(200).json({ upload_url: uploadUrl, s3_key: key, bucket: S3_BUCKET, region: AWS_REGION });
+  } catch (err) {
+    console.error('Presign upload error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/mobile/biometrics/index-face
+router.post('/biometrics/index-face', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    if (!REKOG_COLLECTION_ID) return res.status(500).json({ error: 'Rekognition collection not configured' });
+    if (!S3_BUCKET) return res.status(500).json({ error: 'S3 bucket not configured' });
+    const { s3_key } = req.body || {};
+    if (!s3_key || typeof s3_key !== 'string') {
+      return res.status(400).json({ error: 's3_key is required' });
+    }
+    const indexCmd = new IndexFacesCommand({
+      CollectionId: REKOG_COLLECTION_ID,
+      ExternalImageId: String(req.user.id),
+      Image: {
+        S3Object: { Bucket: S3_BUCKET, Name: s3_key },
+      },
+      DetectionAttributes: [],
+      MaxFaces: 1,
+      QualityFilter: 'AUTO',
+    });
+    const out = await rekog.send(indexCmd);
+    const faceId = out?.FaceRecords?.[0]?.Face?.FaceId;
+    if (!faceId) {
+      return res.status(422).json({ error: 'No face detected' });
+    }
+    return res.status(200).json({ face_id: faceId });
+  } catch (err) {
+    console.error('Index face error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/mobile/biometrics/verify-face
+// Body: { s3_key: string, threshold?: number }
+router.post('/biometrics/verify-face', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    if (!REKOG_COLLECTION_ID) return res.status(500).json({ error: 'Rekognition collection not configured' });
+    if (!S3_BUCKET) return res.status(500).json({ error: 'S3 bucket not configured' });
+    const { s3_key, threshold } = req.body || {};
+    if (!s3_key || typeof s3_key !== 'string') {
+      return res.status(400).json({ error: 's3_key is required' });
+    }
+    const faceThreshold = typeof threshold === 'number' ? threshold : 90; // default 90%
+
+    const cmd = new SearchFacesByImageCommand({
+      CollectionId: REKOG_COLLECTION_ID,
+      Image: { S3Object: { Bucket: S3_BUCKET, Name: s3_key } },
+      FaceMatchThreshold: faceThreshold,
+      MaxFaces: 1,
+    });
+    const out = await rekog.send(cmd);
+    const match = out?.FaceMatches?.[0];
+    if (!match) {
+      return res.status(200).json({ matched: false, confidence: 0 });
+    }
+    return res.status(200).json({
+      matched: true,
+      confidence: match.Similarity || match.Face?.Confidence || 0,
+      face_id: match.Face?.FaceId,
+      external_image_id: match.Face?.ExternalImageId,
+    });
+  } catch (err) {
+    console.error('Verify face error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 const JWT_SECRET = process.env.JWT_SECRET;
 

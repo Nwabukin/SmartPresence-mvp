@@ -55,7 +55,11 @@ const Modal = ({ show = true, onClose, title, children }) => {
           padding: 20,
           borderRadius: 5,
           minWidth: 300,
+          maxWidth: '90vw',
+          width: '800px',
           boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          maxHeight: '80vh',
+          overflowY: 'auto',
         }}
         tabIndex={-1}
         onClick={(e) => { e.stopPropagation(); }}

@@ -184,6 +184,33 @@ const authSchemas = {
   }),
 };
 
+ // Bulk import validation schema (array of user-like rows)
+ const importSchemas = {
+   usersBulk: Joi.object({
+     rows: Joi.array()
+       .items(
+         Joi.object({
+           email: Joi.string().email().max(255).required(),
+           firstName: Joi.string().min(1).max(100).trim().required(),
+           lastName: Joi.string().min(1).max(100).trim().required(),
+           role: Joi.string().valid('teacher', 'student').required(),
+           // Optional fields used by role-specific profiles
+           matricNo: Joi.string().min(0).max(100).trim().allow(''),
+           department: Joi.string().min(0).max(150).trim().allow(''),
+           course: Joi.string().min(0).max(150).trim().allow(''),
+           level: Joi.string().min(0).max(50).trim().allow(''),
+           lecturerNo: Joi.string().min(0).max(100).trim().allow(''),
+           faculty: Joi.string().min(0).max(150).trim().allow(''),
+           office: Joi.string().min(0).max(100).trim().allow(''),
+           phone: Joi.string().max(50).allow('', null),
+           password: Joi.string().min(0).max(100).allow(''),
+         })
+       )
+       .min(1)
+       .required(),
+   }),
+ };
+
 // Notification validation schemas
 const notificationSchemas = {
   getNotifications: Joi.object({
@@ -254,5 +281,6 @@ module.exports = {
     attendance: attendanceSchemas,
     auth: authSchemas,
     notification: notificationSchemas,
+    import: importSchemas,
   },
 };

@@ -1,0 +1,7 @@
+{
+  "db": {
+    "ssl": {
+      "rejectUnauthorized": false
+    }
+  }
+}

@@ -195,6 +195,10 @@ app.use(notFoundHandler);
 // Global error handler (must be last)
 app.use(globalErrorHandler);
 
-app.listen(port, () => {
-  console.log(`SmartPresence backend listening on port ${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`SmartPresence backend listening on port ${port}`);
+  });
+}
+
+module.exports = app;

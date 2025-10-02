@@ -1,4 +1,4 @@
-package com.smartpresence.app.mobile_app
+package com.smartpresence.smartpresence_mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

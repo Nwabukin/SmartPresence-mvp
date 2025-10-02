@@ -756,6 +756,167 @@ router.post(
   }
 );
 
+// --- Bulk Import Users (Admin Only) ---
+// POST /api/users/import
+router.post(
+  '/import',
+  authMiddleware,
+  validate(schemas.import.usersBulk),
+  async (req, res) => {
+    if (req.user.role !== ROLES.ADMIN) {
+      return res
+        .status(403)
+        .json({ error: 'Forbidden: Only administrators can import users.' });
+    }
+
+    const { rows } = req.body; // rows: array of CSV-like objects
+
+    // Helpers
+    const derivePassword = (role, lastName, matricNo, lecturerNo) => {
+      const base =
+        role === ROLES.STUDENT
+          ? `${(matricNo || '').trim()}${(lastName || '').trim()}`
+          : `${(lecturerNo || '').trim()}${(lastName || '').trim()}`;
+      let pwd = base || 'Passw0rd';
+      if (pwd.length < 6) pwd = `${pwd}!1`;
+      return pwd;
+    };
+
+    const summary = {
+      total: rows.length,
+      created: 0,
+      skipped: 0,
+      errors: [],
+    };
+
+    try {
+      for (let i = 0; i < rows.length; i += 1) {
+        const r = rows[i];
+        const rowNum = i + 2; // assume header at 1
+
+        // Process each row in its own transaction to avoid poisoning the whole batch
+        try {
+          const result = await db.withTransaction(async (client) => {
+            const email = (r.email || '').toLowerCase().trim();
+            const firstName = (r.firstName || '').trim();
+            const lastName = (r.lastName || '').trim();
+            const roleStr = (r.role || '').toLowerCase().trim();
+            if (!email || !firstName || !lastName || !['student', 'teacher'].includes(roleStr)) {
+              return { skip: { field: 'required', message: 'Missing required fields or invalid role' } };
+            }
+
+            // duplicate email
+            const emailExists = await client.query('SELECT 1 FROM users WHERE email = $1', [email]);
+            if (emailExists.rows.length > 0) {
+              return { skip: { field: 'email', message: 'Email already exists' } };
+            }
+
+            // Role-specific duplicate keys pre-check
+            if (roleStr === 'student') {
+              const matricNo = (r.matricNo || '').trim();
+              if (matricNo) {
+                const m = await client.query('SELECT 1 FROM student_profiles WHERE matric_no = $1', [matricNo]);
+                if (m.rows.length > 0) {
+                  return { skip: { field: 'matricNo', message: 'matric_no already exists' } };
+                }
+              }
+            } else if (roleStr === 'teacher') {
+              const lecturerNo = (r.lecturerNo || '').trim();
+              if (lecturerNo) {
+                const l = await client.query('SELECT 1 FROM teacher_profiles WHERE lecturer_no = $1', [lecturerNo]);
+                if (l.rows.length > 0) {
+                  return { skip: { field: 'lecturerNo', message: 'lecturer_no already exists' } };
+                }
+              }
+            }
+
+            // Derive password if missing
+            const providedPassword = (r.password || '').trim();
+            const effectivePassword = providedPassword
+              ? providedPassword
+              : derivePassword(
+                  roleStr === 'student' ? ROLES.STUDENT : ROLES.TEACHER,
+                  lastName,
+                  r.matricNo,
+                  r.lecturerNo
+                );
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(effectivePassword, salt);
+
+            // Insert user
+            const inserted = await client.query(
+              'INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5) RETURNING user_id',
+              [email, passwordHash, firstName, lastName, roleStr]
+            );
+            const userId = inserted.rows[0].user_id;
+
+            if (roleStr === 'student') {
+              const matricNo = (r.matricNo || '').trim();
+              const department = (r.department || '').trim() || null;
+              const course = (r.course || '').trim() || null;
+              const level = (r.level || '').trim() || null;
+              const phone = (r.phone || null) || null;
+              if (!matricNo || !department || !course || !level) {
+                // rollback via throwing to outer catch but return structured reason
+                throw new Error('Missing required student profile fields');
+              }
+              await client.query(
+                'INSERT INTO student_profiles (user_id, matric_no, department, course, level, phone) VALUES ($1, $2, $3, $4, $5, $6)',
+                [userId, matricNo, department, course, level, phone]
+              );
+            } else {
+              const lecturerNo = (r.lecturerNo || '').trim();
+              const department = (r.department || '').trim() || null;
+              const faculty = (r.faculty || '').trim() || null;
+              const office = (r.office || '').trim() || null;
+              const phone = (r.phone || null) || null;
+              if (!lecturerNo || !department) {
+                throw new Error('Missing required teacher profile fields');
+              }
+              try {
+                await client.query(
+                  'INSERT INTO teacher_profiles (user_id, lecturer_no, department, faculty, office, phone) VALUES ($1, $2, $3, $4, $5, $6)',
+                  [userId, lecturerNo, department, faculty, office, phone]
+                );
+              } catch (err) {
+                if (err.code === '42703') {
+                  await client.query(
+                    'INSERT INTO teacher_profiles (user_id, lecturer_no, department, office, phone) VALUES ($1, $2, $3, $4, $5)',
+                    [userId, lecturerNo, department, office, phone]
+                  );
+                } else {
+                  throw err;
+                }
+              }
+            }
+
+            return { created: true };
+          });
+
+          if (result && result.skip) {
+            summary.skipped += 1;
+            summary.errors.push({ row: rowNum, field: result.skip.field, message: result.skip.message });
+          } else if (result && result.created) {
+            summary.created += 1;
+          } else {
+            summary.skipped += 1;
+            summary.errors.push({ row: rowNum, field: 'api', message: 'Unknown processing result' });
+          }
+        } catch (e) {
+          // Per-row failure shouldn't abort the batch
+          summary.skipped += 1;
+          summary.errors.push({ row: rowNum, field: 'api', message: e.message || 'Failed to import row' });
+        }
+      }
+
+      return res.status(200).json({ message: 'Import completed', ...summary, total: rows.length });
+    } catch (err) {
+      console.error('[API] Error during bulk import:', err);
+      return res.status(500).json({ error: 'Server error during bulk import.' });
+    }
+  }
+);
+
 // We will add other user management routes here
 
 module.exports = router;

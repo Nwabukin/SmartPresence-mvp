@@ -1,0 +1,101 @@
+email,firstName,lastName,role,matricNo,department,course,level,lecturerNo,faculty,office,phone,password
+jane.smith.1@example.com,Jane,Smith,teacher,,Physics,,,LEC0001,Engineering,Room 404,+15558840212,Passw0rd!
+taylor.williams.2@example.com,Taylor,Williams,teacher,,Chemistry,,,LEC0002,Science,Room 404,+15556487034,Passw0rd!
+casey.johnson.3@example.com,Casey,Johnson,student,STU0003,Physics,BSc Mathematics,100,,,,+15557406199,Passw0rd!
+casey.doe.4@example.com,Casey,Doe,teacher,,Mathematics,,,LEC0004,Business,Room 404,+15557905278,Passw0rd!
+jane.wilson.5@example.com,Jane,Wilson,student,STU0005,Economics,BSc Biology,100,,,,+15557844388,Passw0rd!
+sam.miller.6@example.com,Sam,Miller,student,STU0006,Chemistry,BSc Chemistry,100,,,,+15557210606,Passw0rd!
+morgan.clark.7@example.com,Morgan,Clark,teacher,,Economics,,,LEC0007,Science,Room 404,+15559711290,Passw0rd!
+jordan.wilson.8@example.com,Jordan,Wilson,student,STU0008,Mathematics,BSc Chemistry,300,,,,+15552762395,Passw0rd!
+jordan.johnson.9@example.com,Jordan,Johnson,teacher,,Computer Science,,,LEC0009,Business,Room 202,+15557251594,Passw0rd!
+chris.williams.10@example.com,Chris,Williams,student,STU0010,Computer Science,BSc Mathematics,400,,,,+15554552407,Passw0rd!
+alex.clark.11@example.com,Alex,Clark,teacher,,Biology,,,LEC0011,Arts,Room 101,+15559597247,Passw0rd!
+alex.davis.12@example.com,Alex,Davis,teacher,,Mathematics,,,LEC0012,Business,Room 303,+15551707150,Passw0rd!
+casey.smith.13@example.com,Casey,Smith,student,STU0013,Biology,BSc Mathematics,100,,,,+15555636953,Passw0rd!
+morgan.wilson.14@example.com,Morgan,Wilson,student,STU0014,Economics,BSc Mathematics,100,,,,+15557777947,Passw0rd!
+casey.wilson.15@example.com,Casey,Wilson,student,STU0015,Computer Science,BSc Chemistry,300,,,,+15557848161,Passw0rd!
+jane.wilson.16@example.com,Jane,Wilson,teacher,,Mathematics,,,LEC0016,Business,Room 404,+15552729826,Passw0rd!
+jordan.doe.17@example.com,Jordan,Doe,student,STU0017,Computer Science,BSc Economics,400,,,,+15559208327,Passw0rd!
+sam.brown.18@example.com,Sam,Brown,teacher,,Computer Science,,,LEC0018,Arts,Room 202,+15552432524,Passw0rd!
+sam.jones.19@example.com,Sam,Jones,student,STU0019,Economics,BSc Computer Science,200,,,,+15558972490,Passw0rd!
+casey.doe.20@example.com,Casey,Doe,student,STU0020,Computer Science,BSc Mathematics,200,,,,+15558393436,Passw0rd!
+alex.doe.21@example.com,Alex,Doe,student,STU0021,Physics,BSc Physics,300,,,,+15553041242,Passw0rd!
+jordan.smith.22@example.com,Jordan,Smith,teacher,,Chemistry,,,LEC0022,Science,Room 202,+15556061657,Passw0rd!
+casey.wilson.23@example.com,Casey,Wilson,teacher,,Mathematics,,,LEC0023,Business,Room 101,+15555152612,Passw0rd!
+jane.doe.24@example.com,Jane,Doe,teacher,,Economics,,,LEC0024,Arts,Room 303,+15559324680,Passw0rd!
+sam.williams.25@example.com,Sam,Williams,student,STU0025,Biology,BSc Computer Science,100,,,,+15558640551,Passw0rd!
+morgan.jones.26@example.com,Morgan,Jones,student,STU0026,Computer Science,BSc Biology,400,,,,+15552588914,Passw0rd!
+sam.brown.27@example.com,Sam,Brown,student,STU0027,Biology,BSc Physics,300,,,,+15555939202,Passw0rd!
+chris.johnson.28@example.com,Chris,Johnson,teacher,,Computer Science,,,LEC0028,Business,Room 404,+15558970673,Passw0rd!
+chris.davis.29@example.com,Chris,Davis,student,STU0029,Computer Science,BSc Mathematics,200,,,,+15552320933,Passw0rd!
+alex.williams.30@example.com,Alex,Williams,student,STU0030,Biology,BSc Biology,100,,,,+15553369607,Passw0rd!
+lee.jones.31@example.com,Lee,Jones,student,STU0031,Mathematics,BSc Physics,400,,,,+15559029335,Passw0rd!
+morgan.williams.32@example.com,Morgan,Williams,student,STU0032,Chemistry,BSc Physics,400,,,,+15555594060,Passw0rd!
+lee.miller.33@example.com,Lee,Miller,teacher,,Biology,,,LEC0033,Business,Room 303,+15558585105,Passw0rd!
+jane.davis.34@example.com,Jane,Davis,student,STU0034,Economics,BSc Computer Science,200,,,,+15558421752,Passw0rd!
+chris.smith.35@example.com,Chris,Smith,student,STU0035,Biology,BSc Chemistry,400,,,,+15558211328,Passw0rd!
+jane.jones.36@example.com,Jane,Jones,teacher,,Economics,,,LEC0036,Arts,Room 303,+15557178216,Passw0rd!
+taylor.williams.37@example.com,Taylor,Williams,student,STU0037,Economics,BSc Biology,200,,,,+15559294340,Passw0rd!
+jordan.williams.38@example.com,Jordan,Williams,teacher,,Biology,,,LEC0038,Arts,Room 404,+15559476257,Passw0rd!
+chris.miller.39@example.com,Chris,Miller,student,STU0039,Physics,BSc Chemistry,400,,,,+15551324907,Passw0rd!
+chris.brown.40@example.com,Chris,Brown,student,STU0040,Physics,BSc Biology,400,,,,+15552069376,Passw0rd!
+jordan.davis.41@example.com,Jordan,Davis,student,STU0041,Physics,BSc Computer Science,100,,,,+15551559597,Passw0rd!
+morgan.davis.42@example.com,Morgan,Davis,teacher,,Mathematics,,,LEC0042,Business,Room 101,+15557482991,Passw0rd!
+taylor.miller.43@example.com,Taylor,Miller,student,STU0043,Physics,BSc Chemistry,300,,,,+15558961986,Passw0rd!
+john.wilson.44@example.com,John,Wilson,student,STU0044,Mathematics,BSc Computer Science,300,,,,+15553682953,Passw0rd!
+jordan.jones.45@example.com,Jordan,Jones,teacher,,Mathematics,,,LEC0045,Business,Room 101,+15556121489,Passw0rd!
+jane.williams.46@example.com,Jane,Williams,teacher,,Chemistry,,,LEC0046,Engineering,Room 101,+15551997471,Passw0rd!
+casey.miller.47@example.com,Casey,Miller,teacher,,Physics,,,LEC0047,Engineering,Room 101,+15556782028,Passw0rd!
+chris.brown.48@example.com,Chris,Brown,student,STU0048,Economics,BSc Mathematics,200,,,,+15551767004,Passw0rd!
+casey.brown.49@example.com,Casey,Brown,student,STU0049,Mathematics,BSc Mathematics,100,,,,+15557448582,Passw0rd!
+morgan.johnson.50@example.com,Morgan,Johnson,student,STU0050,Mathematics,BSc Computer Science,300,,,,+15556833259,Passw0rd!
+chris.williams.51@example.com,Chris,Williams,student,STU0051,Chemistry,BSc Computer Science,300,,,,+15553625953,Passw0rd!
+chris.miller.52@example.com,Chris,Miller,teacher,,Physics,,,LEC0052,Business,Room 404,+15559546476,Passw0rd!
+taylor.williams.53@example.com,Taylor,Williams,teacher,,Economics,,,LEC0053,Arts,Room 404,+15553877289,Passw0rd!
+taylor.clark.54@example.com,Taylor,Clark,student,STU0054,Computer Science,BSc Computer Science,300,,,,+15554991780,Passw0rd!
+jordan.doe.55@example.com,Jordan,Doe,student,STU0055,Mathematics,BSc Biology,200,,,,+15555253272,Passw0rd!
+alex.smith.56@example.com,Alex,Smith,teacher,,Computer Science,,,LEC0056,Arts,Room 202,+15555693818,Passw0rd!
+alex.jones.57@example.com,Alex,Jones,teacher,,Mathematics,,,LEC0057,Engineering,Room 404,+15551077981,Passw0rd!
+chris.wilson.58@example.com,Chris,Wilson,teacher,,Mathematics,,,LEC0058,Science,Room 303,+15557831183,Passw0rd!
+sam.williams.59@example.com,Sam,Williams,student,STU0059,Economics,BSc Mathematics,400,,,,+15556751565,Passw0rd!
+casey.brown.60@example.com,Casey,Brown,student,STU0060,Computer Science,BSc Economics,200,,,,+15554105408,Passw0rd!
+morgan.brown.61@example.com,Morgan,Brown,teacher,,Computer Science,,,LEC0061,Business,Room 404,+15555931943,Passw0rd!
+casey.wilson.62@example.com,Casey,Wilson,teacher,,Computer Science,,,LEC0062,Arts,Room 202,+15551812803,Passw0rd!
+jordan.davis.63@example.com,Jordan,Davis,teacher,,Computer Science,,,LEC0063,Arts,Room 303,+15551102311,Passw0rd!
+sam.smith.64@example.com,Sam,Smith,student,STU0064,Biology,BSc Computer Science,400,,,,+15556688495,Passw0rd!
+john.wilson.65@example.com,John,Wilson,teacher,,Computer Science,,,LEC0065,Engineering,Room 404,+15555556129,Passw0rd!
+morgan.davis.66@example.com,Morgan,Davis,student,STU0066,Economics,BSc Chemistry,300,,,,+15558504064,Passw0rd!
+jane.davis.67@example.com,Jane,Davis,teacher,,Economics,,,LEC0067,Business,Room 202,+15557091514,Passw0rd!
+lee.jones.68@example.com,Lee,Jones,teacher,,Mathematics,,,LEC0068,Engineering,Room 404,+15553081682,Passw0rd!
+sam.brown.69@example.com,Sam,Brown,teacher,,Chemistry,,,LEC0069,Business,Room 303,+15553257911,Passw0rd!
+john.williams.70@example.com,John,Williams,student,STU0070,Mathematics,BSc Chemistry,100,,,,+15552762110,Passw0rd!
+chris.doe.71@example.com,Chris,Doe,student,STU0071,Mathematics,BSc Physics,300,,,,+15557478993,Passw0rd!
+john.davis.72@example.com,John,Davis,teacher,,Economics,,,LEC0072,Engineering,Room 303,+15556891509,Passw0rd!
+jordan.doe.73@example.com,Jordan,Doe,student,STU0073,Computer Science,BSc Physics,200,,,,+15553949353,Passw0rd!
+morgan.smith.74@example.com,Morgan,Smith,teacher,,Mathematics,,,LEC0074,Arts,Room 404,+15559910788,Passw0rd!
+morgan.miller.75@example.com,Morgan,Miller,student,STU0075,Computer Science,BSc Biology,200,,,,+15554960781,Passw0rd!
+alex.davis.76@example.com,Alex,Davis,teacher,,Economics,,,LEC0076,Engineering,Room 303,+15551224118,Passw0rd!
+john.doe.77@example.com,John,Doe,teacher,,Economics,,,LEC0077,Science,Room 101,+15551664532,Passw0rd!
+jane.davis.78@example.com,Jane,Davis,student,STU0078,Computer Science,BSc Biology,400,,,,+15555936018,Passw0rd!
+chris.johnson.79@example.com,Chris,Johnson,teacher,,Computer Science,,,LEC0079,Science,Room 303,+15556929201,Passw0rd!
+alex.smith.80@example.com,Alex,Smith,teacher,,Computer Science,,,LEC0080,Business,Room 303,+15559760088,Passw0rd!
+jordan.clark.81@example.com,Jordan,Clark,teacher,,Physics,,,LEC0081,Business,Room 303,+15554235961,Passw0rd!
+taylor.davis.82@example.com,Taylor,Davis,teacher,,Computer Science,,,LEC0082,Engineering,Room 202,+15553625975,Passw0rd!
+chris.miller.83@example.com,Chris,Miller,student,STU0083,Economics,BSc Computer Science,300,,,,+15559130432,Passw0rd!
+taylor.williams.84@example.com,Taylor,Williams,teacher,,Biology,,,LEC0084,Business,Room 303,+15553474508,Passw0rd!
+morgan.brown.85@example.com,Morgan,Brown,student,STU0085,Physics,BSc Economics,300,,,,+15552888978,Passw0rd!
+sam.smith.86@example.com,Sam,Smith,teacher,,Physics,,,LEC0086,Science,Room 404,+15557982016,Passw0rd!
+morgan.smith.87@example.com,Morgan,Smith,student,STU0087,Biology,BSc Computer Science,200,,,,+15552404285,Passw0rd!
+alex.davis.88@example.com,Alex,Davis,student,STU0088,Computer Science,BSc Physics,300,,,,+15558038166,Passw0rd!
+jane.davis.89@example.com,Jane,Davis,student,STU0089,Computer Science,BSc Physics,300,,,,+15559760737,Passw0rd!
+alex.smith.90@example.com,Alex,Smith,student,STU0090,Computer Science,BSc Economics,200,,,,+15552619878,Passw0rd!
+alex.jones.91@example.com,Alex,Jones,teacher,,Computer Science,,,LEC0091,Engineering,Room 101,+15554944969,Passw0rd!
+taylor.jones.92@example.com,Taylor,Jones,teacher,,Chemistry,,,LEC0092,Business,Room 303,+15558380293,Passw0rd!
+lee.doe.93@example.com,Lee,Doe,student,STU0093,Physics,BSc Chemistry,200,,,,+15552501017,Passw0rd!
+sam.davis.94@example.com,Sam,Davis,teacher,,Mathematics,,,LEC0094,Science,Room 202,+15557943183,Passw0rd!
+morgan.doe.95@example.com,Morgan,Doe,student,STU0095,Mathematics,BSc Physics,100,,,,+15556904304,Passw0rd!
+morgan.doe.96@example.com,Morgan,Doe,teacher,,Physics,,,LEC0096,Science,Room 404,+15552449027,Passw0rd!
+taylor.jones.97@example.com,Taylor,Jones,student,STU0097,Physics,BSc Computer Science,400,,,,+15554419646,Passw0rd!
+jordan.clark.98@example.com,Jordan,Clark,teacher,,Biology,,,LEC0098,Business,Room 303,+15557951750,Passw0rd!
+jordan.clark.99@example.com,Jordan,Clark,teacher,,Mathematics,,,LEC0099,Arts,Room 202,+15557972480,Passw0rd!
+jane.williams.100@example.com,Jane,Williams,teacher,,Biology,,,LEC0100,Engineering,Room 101,+15554948164,Passw0rd!
