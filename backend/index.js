@@ -61,7 +61,7 @@ try {
   console.log('✅ Auth routes loaded');
 } catch (error) {
   console.error('❌ Failed to load auth routes:', error.message);
-  process.exit(1);
+  console.error('💡 Check: routes/auth.js exists and has no syntax errors');
 }
 
 try {
@@ -69,7 +69,7 @@ try {
   console.log('✅ User routes loaded');
 } catch (error) {
   console.error('❌ Failed to load user routes:', error.message);
-  process.exit(1);
+  console.error('💡 Check: routes/users.js exists and has no syntax errors');
 }
 
 try {
@@ -77,7 +77,7 @@ try {
   console.log('✅ Room routes loaded');
 } catch (error) {
   console.error('❌ Failed to load room routes:', error.message);
-  process.exit(1);
+  console.error('💡 Check: routes/rooms.js exists and has no syntax errors');
 }
 
 try {
@@ -85,7 +85,7 @@ try {
   console.log('✅ Class routes loaded');
 } catch (error) {
   console.error('❌ Failed to load class routes:', error.message);
-  process.exit(1);
+  console.error('💡 Check: routes/classes.js exists and has no syntax errors');
 }
 
 try {
@@ -93,7 +93,7 @@ try {
   console.log('✅ Session routes loaded');
 } catch (error) {
   console.error('❌ Failed to load session routes:', error.message);
-  process.exit(1);
+  console.error('💡 Check: routes/sessions.js exists and has no syntax errors');
 }
 
 try {
@@ -101,7 +101,7 @@ try {
   console.log('✅ Attendance routes loaded');
 } catch (error) {
   console.error('❌ Failed to load attendance routes:', error.message);
-  process.exit(1);
+  console.error('💡 Check: routes/attendance.js exists and has no syntax errors');
 }
 
 try {
@@ -109,7 +109,7 @@ try {
   console.log('✅ Mobile routes loaded');
 } catch (error) {
   console.error('❌ Failed to load mobile routes:', error.message);
-  process.exit(1);
+  console.error('💡 Check: routes/mobile.js exists and has no syntax errors');
 }
 
 // Define routes
@@ -120,53 +120,39 @@ app.get('/', (req, res) => {
 // Mount routes with error handling
 console.log('🔗 Mounting routes...');
 
-try {
+if (authRoutes) {
   app.use('/api/auth', authRoutes);
   console.log('✅ Auth routes mounted at /api/auth');
-} catch (error) {
-  console.error('❌ Failed to mount auth routes:', error.message);
 }
 
-try {
+if (userRoutes) {
   app.use('/api/users', userRoutes);
   console.log('✅ User routes mounted at /api/users');
-} catch (error) {
-  console.error('❌ Failed to mount user routes:', error.message);
 }
 
-try {
+if (roomRoutes) {
   app.use('/api/rooms', roomRoutes);
   console.log('✅ Room routes mounted at /api/rooms');
-} catch (error) {
-  console.error('❌ Failed to mount room routes:', error.message);
 }
 
-try {
+if (classRoutes) {
   app.use('/api/classes', classRoutes);
   console.log('✅ Class routes mounted at /api/classes');
-} catch (error) {
-  console.error('❌ Failed to mount class routes:', error.message);
 }
 
-try {
+if (sessionRoutes) {
   app.use('/api/sessions', sessionRoutes);
   console.log('✅ Session routes mounted at /api/sessions');
-} catch (error) {
-  console.error('❌ Failed to mount session routes:', error.message);
 }
 
-try {
+if (attendanceRoutes) {
   app.use('/api/attendance', attendanceRoutes);
   console.log('✅ Attendance routes mounted at /api/attendance');
-} catch (error) {
-  console.error('❌ Failed to mount attendance routes:', error.message);
 }
 
-try {
+if (mobileRoutes) {
   app.use('/api/mobile', mobileRoutes);
   console.log('✅ Mobile routes mounted at /api/mobile');
-} catch (error) {
-  console.error('❌ Failed to mount mobile routes:', error.message);
 }
 
 // Health check endpoint for Render
@@ -196,8 +182,8 @@ app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
 if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`SmartPresence backend listening on port ${port}`);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`SmartPresence backend listening on port ${port} (0.0.0.0)`);
   });
 }
 
