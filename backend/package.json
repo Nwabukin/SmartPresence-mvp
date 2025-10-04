@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node scripts/start-simple.js",
+    "start": "node index.js",
     "dev": "node index.js",
     "test": "cross-env NODE_ENV=test jest --runInBand",
     "prod": "NODE_ENV=production node index.js",

@@ -206,7 +206,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     return res.status(403).json({ error: 'Forbidden' });
   try {
     const r = await db.query(
-      `SELECT u.user_id, u.email, u.first_name, u.last_name, sp.matric_no, sp.department, sp.course, sp.level, sp.phone
+      `SELECT u.user_id, u.email, u.first_name, u.last_name, sp.matric_no, sp.department, sp.course, sp.level, sp.phone, sp.rekognition_face_id
          FROM users u LEFT JOIN student_profiles sp ON sp.user_id = u.user_id
         WHERE u.user_id = $1`,
       [req.user.id]
@@ -225,6 +225,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         course: u.course,
         level: u.level,
         phone: u.phone,
+        is_biometric_enrolled: !!u.rekognition_face_id,
       },
     });
   } catch (err) {
@@ -323,7 +324,24 @@ router.post(
       return res.status(403).json({ error: 'Forbidden' });
     const { class_id, session_id, wifi_ssid, bluetooth_beacon_id, device_id } =
       req.body;
+    
+    // Debug: Print received location data
+    console.log('=== ATTENDANCE MARKING DEBUG ===');
+    console.log('Received Wi-Fi SSID:', wifi_ssid);
+    console.log('Received Bluetooth Beacon:', bluetooth_beacon_id);
+    console.log('Received Device ID:', device_id);
+    console.log('================================');
+    
     try {
+      // Check if student has biometric enrollment
+      const biometricCheck = await db.query(
+        'SELECT rekognition_face_id FROM student_profiles WHERE user_id = $1',
+        [req.user.id]
+      );
+      if (!biometricCheck.rows.length || !biometricCheck.rows[0].rekognition_face_id) {
+        return res.status(403).json({ error: 'Biometric enrollment required. Please enroll your face first.' });
+      }
+
       // Verify enrollment
       const enr = await db.query(
         'SELECT 1 FROM enrollments WHERE student_id = $1 AND class_id = $2',
@@ -352,9 +370,17 @@ router.post(
           .json({ error: 'Session not active for marking' });
       }
 
-      // Location validation: wifi or beacon match (beacons are optional)
-      if (s.room_wifi && wifi_ssid && s.room_wifi !== wifi_ssid) {
-        return res.status(403).json({ error: 'Wi‑Fi mismatch' });
+      // Location validation: wifi is required if room has wifi configured
+      console.log('Room Wi-Fi SSID:', s.room_wifi);
+      console.log('Student Wi-Fi SSID:', wifi_ssid);
+      
+      if (s.room_wifi) {
+        if (!wifi_ssid) {
+          return res.status(403).json({ error: 'Wi-Fi connection required for this room. Please connect to the correct Wi-Fi network.' });
+        }
+        if (s.room_wifi !== wifi_ssid) {
+          return res.status(403).json({ error: `Wi-Fi mismatch. Expected: ${s.room_wifi}, Got: ${wifi_ssid}` });
+        }
       }
 
       // Bluetooth beacon validation (optional - only validate if both room and student have beacons)
@@ -371,6 +397,12 @@ router.post(
       // If room has a beacon but student doesn't provide one, that's OK (beacons are optional)
       // If student provides a beacon but room doesn't have one, that's OK (beacons are optional)
       // Only fail if both have beacons and they don't match
+
+      // Face verification is required - the mobile app should have already done this
+      // but we add a server-side check to ensure biometric enrollment exists
+      if (!biometricCheck.rows[0].rekognition_face_id) {
+        return res.status(403).json({ error: 'Face verification required. Please complete biometric enrollment first.' });
+      }
 
       // Enforce one device per session and idempotency per student
       const rec = await db

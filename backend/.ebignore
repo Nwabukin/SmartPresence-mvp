@@ -1,0 +1,41 @@
+# Ignore development files
+node_modules/
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Ignore test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+
+# Ignore development tools
+.eslintrc.js
+.prettierrc
+.git/
+.gitignore
+
+# Ignore logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore temporary files
+tmp/
+temp/
