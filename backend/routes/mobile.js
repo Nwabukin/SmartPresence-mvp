@@ -54,7 +54,83 @@ router.post('/biometrics/enroll', authMiddleware, async (req, res) => {
 });
 
 
-// POST /api/mobile/biometrics/presign-upload
+// POST /api/mobile/biometrics/upload-image (Direct upload)
+router.post('/biometrics/upload-image', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    console.log('🔍 [DEBUG] Upload-image endpoint called');
+    console.log('🔍 [DEBUG] S3_BUCKET:', S3_BUCKET);
+    console.log('🔍 [DEBUG] AWS_REGION:', AWS_REGION);
+    console.log('🔍 [DEBUG] Request body keys:', Object.keys(req.body || {}));
+    
+    if (!S3_BUCKET) return res.status(500).json({ error: 'S3 bucket not configured' });
+    
+    const { purpose } = req.body || {};
+    const safePurpose = typeof purpose === 'string' ? purpose : 'enroll';
+    const timestamp = Date.now();
+    const key = `${safePurpose}/selfies/${req.user.id}/${timestamp}.jpg`;
+    
+    console.log('🔍 [DEBUG] Generated S3 key:', key);
+    
+    // Get the image data from the request body
+    const imageData = req.body.image;
+    if (!imageData) {
+      console.log('🔍 [DEBUG] No image data in request body');
+      return res.status(400).json({ error: 'Image data is required' });
+    }
+    
+    console.log('🔍 [DEBUG] Image data type:', typeof imageData);
+    console.log('🔍 [DEBUG] Image data length:', imageData?.length || 'undefined');
+    
+    // Convert base64 to buffer if needed
+    let buffer;
+    if (typeof imageData === 'string') {
+      if (imageData.startsWith('data:image')) {
+        // Remove data URL prefix
+        const base64Data = imageData.split(',')[1];
+        buffer = Buffer.from(base64Data, 'base64');
+      } else {
+        // Assume it's raw base64 data
+        buffer = Buffer.from(imageData, 'base64');
+      }
+    } else if (Buffer.isBuffer(imageData)) {
+      buffer = imageData;
+    } else {
+      return res.status(400).json({ error: 'Invalid image format' });
+    }
+    
+    // Upload directly to S3
+    console.log('🔍 [DEBUG] Creating S3 PutObjectCommand...');
+    const command = new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: 'image/jpeg',
+    });
+    
+    console.log('🔍 [DEBUG] Sending to S3...');
+    await s3.send(command);
+    console.log('🔍 [DEBUG] S3 upload successful!');
+    
+    return res.status(200).json({ 
+      s3_key: key, 
+      bucket: S3_BUCKET, 
+      region: AWS_REGION,
+      message: 'Image uploaded successfully' 
+    });
+  } catch (err) {
+    console.error('🔍 [DEBUG] Direct upload error:', err);
+    console.error('🔍 [DEBUG] Error details:', {
+      name: err.name,
+      message: err.message,
+      code: err.code,
+      statusCode: err.$metadata?.httpStatusCode
+    });
+    return res.status(500).json({ error: 'Server error during upload' });
+  }
+});
+
+// POST /api/mobile/biometrics/presign-upload (Legacy - keeping for compatibility)
 router.post('/biometrics/presign-upload', authMiddleware, async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ error: 'Forbidden' });
   try {

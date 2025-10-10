@@ -34,8 +34,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+// Middleware to parse JSON bodies (increased limit for base64 images)
+app.use(express.json({ limit: '10mb' }));
 
 // Request ID middleware for tracking
 app.use(requestIdMiddleware);

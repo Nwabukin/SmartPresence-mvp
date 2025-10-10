@@ -30,7 +30,55 @@ Your backend is now packaged and ready for deployment to AWS Elastic Beanstalk.
 7. **Upload:** Select `smartpresence-backend.zip`
 8. Click **"Create Environment"**
 
-### **4. Configure Environment Variables**
+### **4. Configure IAM Permissions (CRITICAL!)**
+
+The Elastic Beanstalk EC2 instances need permissions to access S3 and Rekognition:
+
+1. Go to **IAM Console**: https://console.aws.amazon.com/iam/
+2. Click **Roles** → Find **aws-elasticbeanstalk-ec2-role**
+3. Click **Add permissions** → **Create inline policy**
+4. Click **JSON** tab and paste:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::smartpresence-biometrics-nwabu-us-east-1-1759414530/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::smartpresence-biometrics-nwabu-us-east-1-1759414530"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rekognition:IndexFaces",
+        "rekognition:SearchFacesByImage",
+        "rekognition:DetectFaces",
+        "rekognition:CompareFaces"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+5. **Policy name:** `SmartPresence-S3-Rekognition-Access`
+6. Click **Create policy**
+
+**Important:** Without this IAM policy, biometric enrollment will fail with 500 errors!
+
+### **5. Configure Environment Variables**
 After the environment is created:
 
 1. Go to **Configuration** → **Software**
@@ -48,7 +96,7 @@ PORT = 8080
 
 3. Click **"Apply"**
 
-### **5. Configure Security Groups**
+### **6. Configure Security Groups**
 1. Go to **Configuration** → **Instances**
 2. **Security groups:** Click **"Edit"**
 3. Add inbound rule:
@@ -61,7 +109,7 @@ PORT = 8080
    - **Source:** 0.0.0.0/0
 5. Click **"Apply"**
 
-### **6. Configure Load Balancer**
+### **7. Configure Load Balancer**
 1. Go to **Configuration** → **Load balancer**
 2. **Listener:** Add HTTPS listener
 3. **Port:** 443
@@ -100,19 +148,26 @@ static const String baseUrl = 'https://your-app-name.us-east-1.elasticbeanstalk.
 
 ### **Common Issues:**
 
-1. **Environment Variables Not Set**
+1. **Biometric Enrollment Failing with 500 Error**
+   - **Symptom:** Mobile app shows "Server error during upload (Status: 500)"
+   - **Cause:** IAM role missing S3 PutObject permissions
+   - **Solution:** Add the IAM policy from Step 4 to `aws-elasticbeanstalk-ec2-role`
+   - **Check logs:** `eb logs` should show `AccessDenied: ... is not authorized to perform: s3:PutObject`
+
+2. **Environment Variables Not Set**
    - Ensure all environment variables are configured in EB Console
    - Restart the environment after adding variables
 
-2. **Database Connection Issues**
+3. **Database Connection Issues**
    - Verify RDS security groups allow EB instances
    - Check DATABASE_URL format
 
-3. **AWS Permissions Issues**
+4. **AWS Permissions Issues**
    - Ensure your AWS user has necessary permissions
    - Add IAM policies for EB, RDS, S3, and Rekognition
+   - Verify EC2 role has S3 and Rekognition access
 
-4. **Application Won't Start**
+5. **Application Won't Start**
    - Check logs for startup errors
    - Verify package.json start script
    - Ensure all dependencies are in package.json
@@ -168,3 +223,4 @@ If you encounter any issues:
 2. Update mobile app API URLs
 3. Test the complete flow
 4. Monitor and optimize as needed
+
