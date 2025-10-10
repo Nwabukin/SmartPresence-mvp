@@ -83,3 +83,20 @@ build/
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+# Development artifacts
+Screenshot_*.jpg
+Screenshot_*.png
+*.zip
+*.log
+logs/
+backup/
+
+# Build artifacts
+mobile-app/build/
+mobile-app/android/.kotlin/
+web-portal/dist/
+
+# Test files
+test_*.js
+*_test.js
